@@ -1,5 +1,7 @@
 extends AnimatedSprite2D
 
+@onready var movement = $Movement
+
 func _ready():
     movement.connect("moved_left", play_walk_left)
     movement.connect("moved_right", play_walk_right)
