@@ -2,7 +2,7 @@ extends Node
 
 func _ready():
     # We need to go UP to the parent (Player_1) and then DOWN to Movement Component
-    var movement = get_parent().get_node(Movement)
+    var movement = get_parent().get_node("Movement")
     
     # Connect its signal to our function below
     movement.direction_input.connect(_on_direction_input)
