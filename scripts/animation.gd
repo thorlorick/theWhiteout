@@ -1,24 +1,18 @@
-extends AnimatedSprite2D
-
-@onready var movement = $"../Movement"
+extends Node
 
 func _ready():
-    movement.connect("moved_left", play_walk_left)
-    movement.connect("moved_right", play_walk_right)
-    movement.connect("moved_up", play_walk_up)
-    movement.connect("moved_down", play_walk_down)
+    # We need to go UP to the parent (Player_1) and then DOWN to Movement Component
+    var movement = get_parent().get_node("Movement Component")
+    
+    # Connect its signal to our function below
+    movement.direction_input.connect(_on_direction_input)
 
-
-func play_walk_left():
-    play("walk_left")
-
-func play_walk_right():
-    play("walk_right")
-
-func play_walk_up():
-    play("walk_up")
-
-func play_walk_down():
-    play("walk_down")
-
-
+func _on_direction_input(direction: String):
+    if direction == "left":
+        $AnimationPlayer.play("walk_left")
+    elif direction == "right":
+        $AnimationPlayer.play("walk_right")
+    elif direction == "up":
+        $AnimationPlayer.play("walk_up")
+    elif direction == "down":
+        $AnimationPlayer.play("walk_down")
