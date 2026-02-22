@@ -5,17 +5,12 @@ signal walk_right
 signal walk_down
 signal walk_up
 
-func _process (delta):
-
-    if Input.is_action_pressed("walk_left"):
-        emit_signal("walk_left")
-
-    if Input.is_action_pressed("walk_right"):
-        emit_signal("walk_right")
-
-    if Input.is_action_pressed("walk_down"):
-        emit_signal("walk_down")
-
-    if Input.is_action_pressed("walk_up"):
-        emit_signal("walk_up")
-
+func _process(delta):
+	if Input.is_action_pressed("walk_left"):
+		walk_left.emit()
+	elif Input.is_action_pressed("walk_right"):
+		walk_right.emit()
+	elif Input.is_action_pressed("walk_down"):
+		walk_down.emit()
+	elif Input.is_action_pressed("walk_up"):
+		walk_up.emit()
