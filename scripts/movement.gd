@@ -22,11 +22,15 @@ extends Node
 signal direction_input(direction: Vector2)
 
 func _process(delta):
+    var direction = Vector2.ZERO
+    
     if Input.is_action_pressed("walk_left"):
-        direction_input.emit("left")
-    elif Input.is_action_pressed("walk_right"):
-        direction_input.emit("right")
-    elif Input.is_action_pressed("walk_down"):
-        direction_input.emit("down")
-    elif Input.is_action_pressed("walk_up"):
-        direction_input.emit("up")
+        direction.x -= 1
+    if Input.is_action_pressed("walk_right"):
+        direction.x += 1
+    if Input.is_action_pressed("walk_up"):
+        direction.y -= 1
+    if Input.is_action_pressed("walk_down"):
+        direction.y += 1
+    
+    direction_input.emit(direction)
