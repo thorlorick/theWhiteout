@@ -1,8 +1,5 @@
 extends CharacterBody2D
 
-# A temporary speed value — will move to a Stats component later
-const SPEED = 100.0
-
 # We'll store the current movement direction here
 var current_direction: String = ""
 
