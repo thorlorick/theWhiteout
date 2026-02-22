@@ -22,11 +22,11 @@ func _physics_process(delta):
     if current_direction == "left":
         velocity.x = -stats.speed
     elif current_direction == "right":
-        velocity.x = -stats.speed
+        velocity.x = stats.speed
     elif current_direction == "up":
-        velocity.x = -stats.speed
+        velocity.y = -stats.speed
     elif current_direction == "down":
-        velocity.x = -stats.speed
+        velocity.y = stats.speed
 
     # Actually move the character
     move_and_slide()
