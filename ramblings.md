@@ -10,3 +10,7 @@ Still no clue, and at times I feel like I know less than yesterday....there is a
 
 # Feb 19, 2026
 I'm getting the hang of a few things, but nothing concrete yet. I've got a bunch of little bits and bobs but I need to get them all together into a whole. One simple level...right!!
+
+# Feb 21, 2026
+Learning to use animation player. It's ok, but a bit finicky. I don't really know how to use it so I often delete things.
+I do have a bunch of animations now though, and understand how and where to get them...now to see if we can call them. 
