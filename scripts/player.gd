@@ -1,12 +1,12 @@
 extends CharacterBody2D
 
-# We'll store the current movement direction here
 var current_direction: String = ""
+var stats
 
 func _ready():
-    # Get a reference to the Movement Component node
+    stats = $Stats
     var movement = $Movement
-    
+
     # Connect its signal to our function below
     movement.direction_input.connect(_on_direction_input)
 
@@ -20,13 +20,13 @@ func _physics_process(delta):
 
     # Set velocity based on the current direction
     if current_direction == "left":
-        velocity.x = -SPEED
+        velocity.x = -stats.speed
     elif current_direction == "right":
-        velocity.x = SPEED
+        velocity.x = -stats.speed
     elif current_direction == "up":
-        velocity.y = -SPEED
+        velocity.x = -stats.speed
     elif current_direction == "down":
-        velocity.y = SPEED
+        velocity.x = -stats.speed
 
     # Actually move the character
     move_and_slide()
