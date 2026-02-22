@@ -8,7 +8,7 @@ var current_direction: String = ""
 
 func _ready():
     # Get a reference to the Movement Component node
-    var movement = $"Movement"
+    var movement = $Movement
     
     # Connect its signal to our function below
     movement.direction_input.connect(_on_direction_input)
