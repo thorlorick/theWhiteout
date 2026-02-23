@@ -25,3 +25,5 @@ func _on_direction_input(direction: Vector2):
 func _ready():
     var movement = get_parent().get_node("Movement")
     movement.direction_input.connect(_on_direction_input)
+    var combat = get_parent().get_node("Combat")
+    combat.attack_input.connect(_on_attack_input)
