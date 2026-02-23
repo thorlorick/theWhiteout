@@ -1,17 +1,14 @@
 extends CharacterBody2D
 
-var current_direction: Vector2 = Vector2.ZERO
-var stats
+@onready var stats = $Stats
+@onready var movement = $Movement
+@onready var combat = $Combat
+@onready var sprite = $Animation
 
 func _ready():
-    stats = $Stats
-    var movement = $Movement
-    movement.direction_input.connect(_on_direction_input)
+    movement.direction_input.connect(sprite._on_direction_input)
+    combat.attack_input.connect(sprite._on_attack_input)
 
-func _on_direction_input(direction: Vector2):
-    current_direction = direction
-
-func _physics_process(delta):
-    velocity = current_direction * stats.speed
+func _physics_process(_delta):
+    velocity = movement.current_direction * stats.speed
     move_and_slide()
-    current_direction = Vector2.ZERO
