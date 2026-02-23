@@ -1,3 +1,3 @@
 extends Node
 
-var speed = 100.0
+@export var value: float = 200.0
