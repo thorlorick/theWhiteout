@@ -4,9 +4,6 @@ var _last_direction: String = "down"
 var _is_moving: bool = false
 var _is_attacking: bool = false
 
-func _ready():
-    $AnimationPlayer.animation_finished.connect(_on_animation_finished)
-
 func _on_direction_input(direction: Vector2):
     _is_moving = direction != Vector2.ZERO
     
@@ -37,3 +34,6 @@ func _update_animation():
         $AnimationPlayer.play("walk_" + _last_direction)
     else:
         $AnimationPlayer.play("idle_" + _last_direction)
+
+func _ready():
+    $AnimationPlayer.animation_finished.connect(_on_animation_finished)
