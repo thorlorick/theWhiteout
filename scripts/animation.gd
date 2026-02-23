@@ -1,4 +1,4 @@
-extends Node
+extends Sprite2D
 
 func _ready():
     var movement = get_parent().get_node("Movement")
