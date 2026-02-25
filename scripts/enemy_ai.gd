@@ -1,10 +1,9 @@
-extends node
-
-@onready var detection_zone = $DetectionZone
+extends Node2D
 
 enum State { IDLE, PATROL, CHASE, ATTACK }
-
 var current_state = State.IDLE
+
+@onready var detection_zone = $DetectionZone
 
 func _physics_process(delta):
     match current_state:
