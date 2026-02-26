@@ -6,8 +6,8 @@ var current_state: FSMStateBase = null
 var entity = null
 var states := {}
 
-func init(owner) -> void:
-    entity = owner
+func init(entity_owner) -> void:
+    entity = entity_owner
     for child in get_children():
         if child is FSMStateBase:
             states[child.state_name] = child
