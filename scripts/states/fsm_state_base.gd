@@ -7,8 +7,8 @@ signal transition_requested(state_name: String)
 @export var state_name: String = ""
 var entity = null
 
-func enter(owner) -> void:
-    entity = owner
+func enter(entity_owner) -> void:
+    entity = entity_owner
 
 func exit() -> void:
     pass
