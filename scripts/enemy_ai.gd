@@ -1,7 +1,13 @@
-extends Node2D
+# enemy_ai.gd
 
-enum State { IDLE, PATROL, CHASE, ATTACK }
+class_name EnemyAI
+extends CharacterBody2D
 
-var current_state = State.IDLE
-var target = null
+@onready var fsm: FSM = $FSM
+
+func _ready() -> void:
+    fsm.init(self)
+
+func _physics_process(delta: float) -> void:
+    fsm.update(delta)
 
