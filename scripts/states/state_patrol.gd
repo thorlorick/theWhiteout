@@ -4,8 +4,8 @@ extends FSMStateBase
 var patrol_timer: float = 0.0
 const PATROL_DURATION: float = 3.0
 
-func enter(owner) -> void:
-    super.enter(owner)
+func enter(entity_owner) -> void:
+    super.enter(entity_owner)
     patrol_timer = 0.0
     print("Entering Patrol")
 
