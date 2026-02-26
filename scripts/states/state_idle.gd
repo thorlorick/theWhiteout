@@ -4,9 +4,13 @@ extends FSMStateBase
 var idle_timer: float = 0.0
 const IDLE_DURATION: float = 2.0
 
-func enter(entity_owner) -> void:
-    super.enter(entity_owner)
+func enter(owner) -> void:
+    super.enter(owner)
     idle_timer = 0.0
+    print("Entering Idle")
+
+func exit() -> void:
+    print("Exiting Idle")
 
 func update(delta: float) -> void:
     idle_timer += delta
