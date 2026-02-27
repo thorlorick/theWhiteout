@@ -14,3 +14,6 @@ I'm getting the hang of a few things, but nothing concrete yet. I've got a bunch
 # Feb 21, 2026
 Learning to use animation player. It's ok, but a bit finicky. I don't really know how to use it so I often delete things.
 I do have a bunch of animations now though, and understand how and where to get them...now to see if we can call them. 
+
+# Feb 27, 2026
+We've hit our first philosiphical issue...state machines and behaviour trees. Small game yes, but does that mean the enemy shouldn't have some personality...not sure. Am I skilled enough to build it...definitely not. BUT, it does make a bit more sense when thinking about how to think about the game....turtles upon turtles!!!!!
