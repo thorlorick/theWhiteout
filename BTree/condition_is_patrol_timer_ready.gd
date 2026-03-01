@@ -3,10 +3,7 @@ class_name ConditionIsPatrolTimerReady
 extends BTNode
 
 func tick(actor, blackboard) -> Status:
-    var timer = blackboard["patrol_timer"]
-    var current_timer = blackboard["current_timer"]
-    
-    if timer 
+    if blackboard["idle_timer"] >= 20:
         return Status.SUCCESS
     
     return Status.FAILURE
