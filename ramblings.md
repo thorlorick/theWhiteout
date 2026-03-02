@@ -17,3 +17,6 @@ I do have a bunch of animations now though, and understand how and where to get 
 
 # Feb 27, 2026
 We've hit our first philosiphical issue...state machines and behaviour trees. Small game yes, but does that mean the enemy shouldn't have some personality...not sure. Am I skilled enough to build it...definitely not. BUT, it does make a bit more sense when thinking about how to think about the game....turtles upon turtles!!!!!
+
+# March 2, 2026
+We've discoverd GOAP -- Goal Oriented Action Plannning -- AI for the video games. It allows for costs attached to desires....looks really cool.
