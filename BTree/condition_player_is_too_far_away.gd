@@ -3,7 +3,7 @@ class_name ConditionPlayerIsTooFarAway
 extends BTNode
 
 func tick(actor, blackboard) -> Status:
-    if actor.position.distance_to(blackboard["target_location"]) >= 100:
+    if actor.position.distance_to(blackboard["target_position"]) >= 100:
         return Status.SUCCESS
     
     return Status.FAILURE
