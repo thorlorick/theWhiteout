@@ -1,3 +1,4 @@
+# standard_guard.gd
 extends CharacterBody2D
 
 var home_position: Vector2
@@ -8,7 +9,8 @@ var blackboard = {
 	"current_waypoint_index": 0,
 	"current_waypoint": Vector2.ZERO,
 	"waypoints": [],
-	"home_position": Vector2.ZERO
+	"home_position": Vector2.ZERO,
+	"patrol_complete": false
 }
 
 var tree
@@ -33,19 +35,31 @@ func move_toward(target: Vector2):
 func _build_tree():
 	var root = BTSelector.new()
 	
+	var return_home_sequence = BTSequence.new()
+	return_home_sequence.children = [
+		ConditionIsPatrolComplete.new(),
+		ActionReturnHome.new(),
+	]
+	
+	var at_home_sequence = BTSequence.new()
+	at_home_sequence.children = [
+		ConditionIsAtHome.new(),
+		ActionIdle.new(),
+		
+	]
+	
 	var patrol_sequence = BTSequence.new()
 	patrol_sequence.children = [
 		ConditionIsPatrolTimerReady.new(),
 		ActionPatrol.new(),
 		ActionNextWaypoint.new(),
-		ActionReturnHome.new(),
-		ConditionIsAtHome.new(),
-		ActionResetTimer.new()
 	]
 	
 	root.children = [
+		return_home_sequence,
 		patrol_sequence,
-		ActionIdle.new()
+		at_home_sequence,
+		
 	]
 	
 	return root
