@@ -20,3 +20,6 @@ We've hit our first philosiphical issue...state machines and behaviour trees. Sm
 
 # March 2, 2026
 We've discoverd GOAP -- Goal Oriented Action Plannning -- AI for the video games. It allows for costs attached to desires....looks really cool.
+
+# March 7, 2026
+GOAP is the GOAT!!!! jokes aside...it's truly awesome. I know have a fully animated goblin guard walking around a region constantly struggling with whether to patrol or go home...it's really cool. Now we have to add some more behaviours...this is so much fun!!!!
