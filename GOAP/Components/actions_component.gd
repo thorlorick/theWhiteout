@@ -1,14 +1,22 @@
-class_name GoalsComponent
+class_name ActionsComponent
 
-var goals = [
+var actions = [
 	{
-		"name": "BeHome",
-		"desired_state": {"at_home": true},
-		"priority": 0.0
+		"name": "GoHome",
+		"preconditions": {"at_home": false},
+		"effects": {"at_home": true, "patrolling": false},
+		"cost": 1.0
 	},
 	{
-		"name": "Patrol",
-		"desired_state": {"patrolling": true},
-		"priority": 0.0
-	}
+		"name": "GoPatrol",
+		"preconditions": {},
+		"effects": {"patrolling": true, "at_home": false},
+		"cost": 1.0
+	},
+	{
+		"name": "ChaseUE",
+		"preconditions": {"sees_ue": true},
+		"effects": {"sees_ue": true},
+		"cost": 1.0
+	},
 ]
