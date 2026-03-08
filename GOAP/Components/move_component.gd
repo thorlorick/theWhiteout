@@ -4,7 +4,7 @@ extends Node
 signal destination_reached
 signal velocity_changed(direction: String, is_moving: bool)
 
-@export var body: CharacterBody2D
+@export var body:  CharacterBody2D
 @export var agent: NavigationAgent2D
 
 var speed: float = 100.0
@@ -19,8 +19,8 @@ func _physics_process(delta) -> void:
 			velocity_changed.emit(_get_direction(body.velocity), false)
 		return
 	var next_point = agent.get_next_path_position()
-	var direction = (next_point - body.global_position).normalized()
-	body.velocity = direction * speed
+	var direction  = (next_point - body.global_position).normalized()
+	body.velocity  = direction * speed
 	body.move_and_slide()
 	velocity_changed.emit(_get_direction(body.velocity), true)
 
