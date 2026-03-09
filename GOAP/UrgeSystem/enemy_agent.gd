@@ -16,7 +16,6 @@ var world_state := WorldState.new()
 var goals       := GoalsComponent.new()
 var actions     := ActionsComponent.new()
 var speed       := SpeedComponent.new()
-var animation   := AnimationComponent.new()
 
 # scene tree components — need node lifecycle
 @export var move_component:   MoveComponent
@@ -39,9 +38,8 @@ func _ready() -> void:
 	patrol_component.nav_region    = nav_region
 	patrol_component.home_position = home_position
 
-	# connect signals
-	move_component.destination_reached.connect(_on_destination_reached)
-	move_component.velocity_changed.connect(animation.update)
+	# connect signals — destination_reached is NOT connected here
+	# it connects and disconnects around each specific move
 	move_component.velocity_changed.connect(vision_component.update_direction)
 	vision_component.spotted_ue.connect(_on_spotted_ue)
 	chase_component.move_to.connect(_on_chase_move_to)
@@ -49,12 +47,19 @@ func _ready() -> void:
 	chase_component.ue_lost.connect(_on_ue_lost)
 	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
 
-	var anim_player = $EnemyAnimations/AnimationPlayer
-	animation.setup(anim_player)
-
 	# guard starts patrolling
 	world_state.set_state("patrolling", true)
 	patrol_component.start()
+
+# -----------------------------------------------------------------------------
+# _move_to — single place that sets a target and listens for arrival
+# connects destination_reached fresh each time so it fires exactly once
+# -----------------------------------------------------------------------------
+func _move_to(pos: Vector2) -> void:
+	if move_component.destination_reached.is_connected(_on_destination_reached):
+		move_component.destination_reached.disconnect(_on_destination_reached)
+	move_component.destination_reached.connect(_on_destination_reached, CONNECT_ONE_SHOT)
+	move_component.set_target(pos)
 
 # -----------------------------------------------------------------------------
 # _process — urges tick, priorities update, planner runs every frame
@@ -121,12 +126,13 @@ func _execute_action(action: Dictionary) -> void:
 			patrol_component.stop()
 			world_state.set_state("patrolling", false)
 			world_state.set_state("at_home", false)
-			move_component.set_target(home_position)
+			_move_to(home_position)
 
 		"GoPatrol":
 			print(">>> ACTION: going on patrol")
 			world_state.set_state("at_home", false)
 			world_state.set_state("patrolling", true)
+			urge.committed_to_patrol()
 			patrol_component.start()
 
 		"ChaseUE":
@@ -152,7 +158,7 @@ func _get_guard_state() -> String:
 
 func _on_destination_reached() -> void:
 	if _current_goal_name == "BeHome":
-		# we were heading home and we arrived — exact destination match
+		# we were heading home and arrived
 		print(">>> ARRIVED HOME")
 		world_state.set_state("at_home", true)
 		world_state.set_state("patrolling", false)
@@ -163,7 +169,7 @@ func _on_destination_reached() -> void:
 		patrol_component.arrived()
 
 func _on_new_patrol_target(position: Vector2) -> void:
-	move_component.set_target(position)
+	_move_to(position)
 
 func _on_spotted_ue(ue_body: Node2D) -> void:
 	if world_state.get_state("sees_ue"):
