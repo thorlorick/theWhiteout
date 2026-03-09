@@ -5,6 +5,7 @@ extends Node
 # PatrolComponent
 # Home anchored wandering with random dwell time at each point.
 # Guard arrives, checks the area for a random duration, moves on.
+# Knows where home is — it's part of the geography it operates in.
 # Drives movement via signal — knows nothing about MoveComponent.
 # -----------------------------------------------------------------------------
 
@@ -13,7 +14,8 @@ signal new_patrol_target(position: Vector2)
 const DELAY_MIN: float = 1.0   # shortest check — quick glance
 const DELAY_MAX: float = 5.0   # longest check — thorough sweep
 
-@export var nav_region: NavigationRegion2D
+@export var nav_region:    NavigationRegion2D
+@export var home_position: Vector2
 
 var _timer:    float = 0.0
 var _dwelling: bool  = false   # true = guard is checking the area
@@ -42,6 +44,7 @@ func arrived() -> void:
 # start — kicks off the first move
 # -----------------------------------------------------------------------------
 func start() -> void:
+	_dwelling = false
 	new_patrol_target.emit(_get_random_point())
 
 # -----------------------------------------------------------------------------
@@ -52,7 +55,7 @@ func stop() -> void:
 	_timer    = 0.0
 
 # -----------------------------------------------------------------------------
-# _get_random_point — random point on nav mesh, no radius restriction
+# _get_random_point — random point on nav mesh
 # the region itself defines the boundaries
 # -----------------------------------------------------------------------------
 func _get_random_point() -> Vector2:
