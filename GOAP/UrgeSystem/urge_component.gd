@@ -100,6 +100,15 @@ func _decay_toward(current: float, target: float, rate: float, delta: float) -> 
 	return current
 
 # -----------------------------------------------------------------------------
+# committed_to_patrol — guard just left home, reset home urge, boost patrol
+# he's not homesick yet and he's motivated — give him a running start
+# -----------------------------------------------------------------------------
+func committed_to_patrol() -> void:
+	home_urge   = HOME_URGE_REST
+	patrol_urge = 0.6
+	print(">>> URGE: committed to patrol — home reset, patrol boosted")
+
+# -----------------------------------------------------------------------------
 # getters — clean read-only access for GoalsComponent and PlannerComponent
 # -----------------------------------------------------------------------------
 func get_home_urge()   -> float: return home_urge
