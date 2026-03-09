@@ -1,12 +1,11 @@
 class_name ChaseComponent
 extends Node
 
-signal ue_lost
 signal ue_caught
+signal ue_lost
 signal move_to(position: Vector2)
 
-const CATCH_DISTANCE: float = 5.0
-const LOSE_DISTANCE:  float = 250.0
+const STRIKE_DISTANCE: float = 50.0  # Joe to UE — close enough to hit
 
 var target: Node2D = null
 var active: bool   = false
@@ -24,15 +23,14 @@ func stop_chase() -> void:
 func _process(delta: float) -> void:
 	if not active or target == null:
 		return
+
 	var distance = body.global_position.distance_to(target.global_position)
-	if distance <= CATCH_DISTANCE:
-		print(">>> UE CAUGHT!")
+
+	# close enough — stop closing the gap
+	if distance <= STRIKE_DISTANCE:
+		print(">>> CHASE: close enough — strike range reached")
 		stop_chase()
 		ue_caught.emit()
 		return
-	if distance >= LOSE_DISTANCE:
-		print(">>> UE LOST!")
-		stop_chase()
-		ue_lost.emit()
-		return
+
 	move_to.emit(target.global_position)
