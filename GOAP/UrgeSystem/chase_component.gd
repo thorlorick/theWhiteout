@@ -13,7 +13,7 @@ signal ue_lost
 signal move_to(position: Vector2)
 signal zone_changed(new_zone: int)
 
-# Joe-to-UE distance — close enough to act
+# Guard-to-UE distance — close enough to act
 const STRIKE_DISTANCE: float = 50.0
 
 # UE-to-home threat zones
@@ -55,10 +55,10 @@ func _process(_delta: float) -> void:
 	if not active or target == null:
 		return
 
-	var joe_to_ue = body.global_position.distance_to(target.global_position)
+	var guard_to_ue = body.global_position.distance_to(target.global_position)
 
 	# close enough to act — stop chasing
-	if joe_to_ue <= STRIKE_DISTANCE:
+	if guard_to_ue <= STRIKE_DISTANCE:
 		print(">>> CHASE: strike range reached")
 		stop_chase()
 		ue_caught.emit()
