@@ -48,7 +48,7 @@ func _ready() -> void:
 	var anim_player = $EnemyAnimations/AnimationPlayer
 	animation.setup(anim_player)
 
-	# Joe starts patrolling
+	# guard starts patrolling
 	world_state.set_state("patrolling", true)
 	_go_patrol()
 
@@ -56,8 +56,8 @@ func _ready() -> void:
 # _process — urges tick, priorities update, planner runs every frame
 # -----------------------------------------------------------------------------
 func _process(delta: float) -> void:
-	# figure out Joe's current state for urge ticking
-	var joe_state: String = _get_joe_state()
+	# figure out guard's current state for urge ticking
+	var guard_state: String = _get_guard_state()
 
 	# figure out current threat zone (needs UE position if visible)
 	var zone: int = -1
@@ -70,7 +70,7 @@ func _process(delta: float) -> void:
 			zone = chase_component.get_current_zone()
 
 	# tick urges
-	urge.tick(delta, joe_state, zone)
+	urge.tick(delta, guard_state, zone)
 
 	# push urge values into goals
 	goals.update_priorities(
@@ -131,9 +131,9 @@ func _execute_action(action: Dictionary) -> void:
 				chase_component.start_chase(ue)
 
 # -----------------------------------------------------------------------------
-# _get_joe_state — reads world state to determine urge tick context
+# _get_guard_state — reads world state to determine urge tick context
 # -----------------------------------------------------------------------------
-func _get_joe_state() -> String:
+func _get_guard_state() -> String:
 	if world_state.get_state("sees_ue"):
 		return "chasing"
 	if world_state.get_state("at_home"):
@@ -151,8 +151,8 @@ func _go_patrol() -> void:
 # -----------------------------------------------------------------------------
 
 func _on_destination_reached() -> void:
-	var joe_state = _get_joe_state()
-	match joe_state:
+	var guard_state = _get_guard_state()
+	match guard_state:
 
 		"at_home":
 			# already home — nothing to do, urges will sort it out
