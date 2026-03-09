@@ -10,19 +10,19 @@ extends CharacterBody2D
 # -----------------------------------------------------------------------------
 
 # pure logic components — no scene tree presence needed
-var urge       := UrgeComponent.new()
-var planner    := PlannerComponent.new()
-var world_state:= WorldState.new()
-var goals      := GoalsComponent.new()
-var actions    := ActionsComponent.new()
-var patrol     := PatrolComponent.new()
-var speed      := SpeedComponent.new()
-var animation  := AnimationComponent.new()
+var urge        := UrgeComponent.new()
+var planner     := PlannerComponent.new()
+var world_state := WorldState.new()
+var goals       := GoalsComponent.new()
+var actions     := ActionsComponent.new()
+var speed       := SpeedComponent.new()
+var animation   := AnimationComponent.new()
 
 # scene tree components — need node lifecycle
 @export var move_component:   MoveComponent
 @export var vision_component: VisionComponent
 @export var chase_component:  ChaseComponent
+@export var patrol_component: PatrolComponent
 @export var nav_region:       NavigationRegion2D
 @export var home_position:    Vector2
 
@@ -30,11 +30,11 @@ var animation  := AnimationComponent.new()
 var _current_goal_name: String = "Patrol"
 
 # -----------------------------------------------------------------------------
-# _ready — wire everything up, Joe starts patrolling
+# _ready — wire everything up, guard starts patrolling
 # -----------------------------------------------------------------------------
 func _ready() -> void:
 	move_component.set_speed(speed.get_speed())
-	patrol.setup(nav_region)
+	patrol_component.nav_region = nav_region
 
 	# connect signals
 	move_component.destination_reached.connect(_on_destination_reached)
@@ -44,13 +44,14 @@ func _ready() -> void:
 	chase_component.move_to.connect(_on_chase_move_to)
 	chase_component.ue_caught.connect(_on_ue_caught)
 	chase_component.ue_lost.connect(_on_ue_lost)
+	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
 
 	var anim_player = $EnemyAnimations/AnimationPlayer
 	animation.setup(anim_player)
 
 	# guard starts patrolling
 	world_state.set_state("patrolling", true)
-	_go_patrol()
+	patrol_component.start()
 
 # -----------------------------------------------------------------------------
 # _process — urges tick, priorities update, planner runs every frame
@@ -58,6 +59,12 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	# figure out guard's current state for urge ticking
 	var guard_state: String = _get_guard_state()
+
+	# check proximity to home — geography determines if guard is home
+	# no destination event needed, just measure the facts on the ground
+	var dist_to_home = global_position.distance_to(home_position)
+	if dist_to_home < 10.0 and not world_state.get_state("at_home"):
+		_arrive_home()
 
 	# figure out current threat zone (needs UE position if visible)
 	var zone: int = -1
@@ -79,7 +86,7 @@ func _process(delta: float) -> void:
 		urge.get_gap_urge()
 	)
 
-	# ask planner what Joe should do
+	# ask planner what guard should do
 	_replan()
 
 # -----------------------------------------------------------------------------
@@ -108,27 +115,40 @@ func _replan() -> void:
 		_execute_action(best_action)
 
 # -----------------------------------------------------------------------------
-# _execute_action — tells Joe what to do, updates world state
+# _execute_action — tells guard what to do, updates world state
 # -----------------------------------------------------------------------------
 func _execute_action(action: Dictionary) -> void:
 	match action["name"]:
 
 		"GoHome":
 			print(">>> ACTION: going home")
+			patrol_component.stop()
 			world_state.set_state("patrolling", false)
+			world_state.set_state("at_home", false)
 			move_component.set_target(home_position)
 
 		"GoPatrol":
 			print(">>> ACTION: going on patrol")
 			world_state.set_state("at_home", false)
 			world_state.set_state("patrolling", true)
-			_go_patrol()
+			patrol_component.start()
 
 		"ChaseUE":
 			print(">>> ACTION: chasing UE")
+			patrol_component.stop()
 			var ue = world_state.get_state("ue_target")
 			if ue != null and not chase_component.active:
 				chase_component.start_chase(ue)
+
+# -----------------------------------------------------------------------------
+# _arrive_home — guard crossed the home threshold
+# -----------------------------------------------------------------------------
+func _arrive_home() -> void:
+	print(">>> ARRIVED HOME")
+	world_state.set_state("at_home", true)
+	world_state.set_state("patrolling", false)
+	world_state.set_state("gap_closed", true)
+	move_component.stop()
 
 # -----------------------------------------------------------------------------
 # _get_guard_state — reads world state to determine urge tick context
@@ -141,35 +161,16 @@ func _get_guard_state() -> String:
 	return "patrolling"
 
 # -----------------------------------------------------------------------------
-# _go_patrol — picks a random patrol point and moves there
-# -----------------------------------------------------------------------------
-func _go_patrol() -> void:
-	move_component.set_target(patrol.get_random_point())
-
-# -----------------------------------------------------------------------------
 # SIGNAL HANDLERS
 # -----------------------------------------------------------------------------
 
 func _on_destination_reached() -> void:
-	var guard_state = _get_guard_state()
-	match guard_state:
+	# only patrol cares about destination arrival — guard reached a patrol point
+	if world_state.get_state("patrolling"):
+		patrol_component.arrived()
 
-		"at_home":
-			# already home — nothing to do, urges will sort it out
-			pass
-
-		"patrolling":
-			# waypoint reached — pick the next one
-			print(">>> PATROL: waypoint reached — moving to next")
-			_go_patrol()
-
-		_:
-			# arrived somewhere after going home
-			if not world_state.get_state("at_home") and _current_goal_name == "BeHome":
-				print(">>> ARRIVED HOME")
-				world_state.set_state("at_home", true)
-				world_state.set_state("patrolling", false)
-				world_state.set_state("gap_closed", true)
+func _on_new_patrol_target(position: Vector2) -> void:
+	move_component.set_target(position)
 
 func _on_spotted_ue(ue_body: Node2D) -> void:
 	if world_state.get_state("sees_ue"):
