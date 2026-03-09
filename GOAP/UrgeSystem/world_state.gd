@@ -19,3 +19,4 @@ func get_state(key: String) -> Variant:
 
 func set_state(key: String, value: Variant) -> void:
 	_state[key] = value
+
