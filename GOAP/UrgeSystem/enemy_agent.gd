@@ -34,7 +34,10 @@ var _current_goal_name: String = "Patrol"
 # -----------------------------------------------------------------------------
 func _ready() -> void:
 	move_component.set_speed(speed.get_speed())
-	patrol_component.nav_region = nav_region
+
+	# pass geography to patrol — it needs to know where home is
+	patrol_component.nav_region    = nav_region
+	patrol_component.home_position = home_position
 
 	# connect signals
 	move_component.destination_reached.connect(_on_destination_reached)
@@ -57,14 +60,7 @@ func _ready() -> void:
 # _process — urges tick, priorities update, planner runs every frame
 # -----------------------------------------------------------------------------
 func _process(delta: float) -> void:
-	# figure out guard's current state for urge ticking
 	var guard_state: String = _get_guard_state()
-
-	# check proximity to home — geography determines if guard is home
-	# no destination event needed, just measure the facts on the ground
-	var dist_to_home = global_position.distance_to(home_position)
-	if dist_to_home < 10.0 and not world_state.get_state("at_home"):
-		_arrive_home()
 
 	# figure out current threat zone (needs UE position if visible)
 	var zone: int = -1
@@ -141,16 +137,6 @@ func _execute_action(action: Dictionary) -> void:
 				chase_component.start_chase(ue)
 
 # -----------------------------------------------------------------------------
-# _arrive_home — guard crossed the home threshold
-# -----------------------------------------------------------------------------
-func _arrive_home() -> void:
-	print(">>> ARRIVED HOME")
-	world_state.set_state("at_home", true)
-	world_state.set_state("patrolling", false)
-	world_state.set_state("gap_closed", true)
-	move_component.stop()
-
-# -----------------------------------------------------------------------------
 # _get_guard_state — reads world state to determine urge tick context
 # -----------------------------------------------------------------------------
 func _get_guard_state() -> String:
@@ -165,8 +151,15 @@ func _get_guard_state() -> String:
 # -----------------------------------------------------------------------------
 
 func _on_destination_reached() -> void:
-	# only patrol cares about destination arrival — guard reached a patrol point
-	if world_state.get_state("patrolling"):
+	if _current_goal_name == "BeHome":
+		# we were heading home and we arrived — exact destination match
+		print(">>> ARRIVED HOME")
+		world_state.set_state("at_home", true)
+		world_state.set_state("patrolling", false)
+		world_state.set_state("gap_closed", true)
+		move_component.stop()
+	elif world_state.get_state("patrolling"):
+		# reached a patrol point — dwell then move on
 		patrol_component.arrived()
 
 func _on_new_patrol_target(position: Vector2) -> void:
