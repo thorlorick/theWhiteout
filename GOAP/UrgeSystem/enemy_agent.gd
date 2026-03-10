@@ -29,6 +29,9 @@ var animation   := AnimationComponent.new()
 # current goal name — used only for inertia in the planner
 var _current_goal_name: String = "Patrol"
 
+# zone tracker — used to fire zone 2 spike exactly once on entry
+var _last_zone: int = -1
+
 # -----------------------------------------------------------------------------
 # _ready — wire everything up, guard starts patrolling
 # -----------------------------------------------------------------------------
@@ -82,6 +85,11 @@ func _process(delta: float) -> void:
 			var gap_urge   = chase_component.evaluate_threat(ue_to_home)
 			urge.set_gap_urge(gap_urge)
 			zone = chase_component.get_current_zone()
+
+	# fire home_urge spike exactly once when entering zone 2
+	if zone == 2 and _last_zone != 2:
+		urge.home_urge = min(1.0, urge.home_urge + urge.INNER_ZONE_BOOST)
+	_last_zone = zone
 
 	# tick urges
 	urge.tick(delta, guard_state, zone)
@@ -164,14 +172,12 @@ func _get_guard_state() -> String:
 
 func _on_destination_reached() -> void:
 	if _current_goal_name == "BeHome":
-		# we were heading home and arrived
 		print(">>> ARRIVED HOME")
 		world_state.set_state("at_home", true)
 		world_state.set_state("patrolling", false)
 		world_state.set_state("gap_closed", true)
 		move_component.stop()
 	elif world_state.get_state("patrolling"):
-		# reached a patrol point — dwell then move on
 		patrol_component.arrived()
 
 func _on_new_patrol_target(position: Vector2) -> void:
