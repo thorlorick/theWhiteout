@@ -25,7 +25,6 @@ var animation   := AnimationComponent.new()
 
 var _current_goal_name: String = "Patrol"
 
-# zone state — tracked for alert tick and chase trigger
 var _in_danger_zone: bool = false
 var _in_alert_zone:  bool = false
 
@@ -38,6 +37,9 @@ func _ready() -> void:
 	patrol_component.nav_region    = nav_region
 	patrol_component.home_position = home_position
 
+	# setup zone component — centers it on home
+	zone_component.setup(home_position)
+
 	move_component.velocity_changed.connect(animation.update)
 	move_component.velocity_changed.connect(vision_component.update_direction)
 	vision_component.spotted_ue.connect(_on_spotted_ue)
@@ -46,7 +48,6 @@ func _ready() -> void:
 	chase_component.ue_lost.connect(_on_ue_lost)
 	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
 
-	# connect zone signals
 	zone_component.body_entered_danger.connect(_on_danger_entered)
 	zone_component.body_exited_danger.connect(_on_danger_exited)
 	zone_component.body_entered_alert.connect(_on_alert_entered)
@@ -73,14 +74,11 @@ func _move_to(pos: Vector2) -> void:
 func _process(delta: float) -> void:
 	var guard_state: String = _get_guard_state()
 
-	# apply alert zone pressure every frame while UE is in alert zone
 	if _in_alert_zone:
 		urge.on_alert_tick(delta)
 
-	# tick urges
 	urge.tick(delta, guard_state)
 
-	# push urge values into goals
 	goals.update_priorities(
 		urge.get_home_urge(),
 		urge.get_patrol_urge()
