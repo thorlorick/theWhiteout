@@ -7,7 +7,6 @@ const RAY_COUNT:  int   = 3
 const RAY_LENGTH: float = 200.0
 const RAY_SPREAD: float = 15.0
 
-# how long Joe must fail to see the UE before we call it lost
 const LOST_TIMER_MAX: float = 0.5
 
 var current_direction: String = "down"
@@ -15,6 +14,7 @@ var space_state: PhysicsDirectSpaceState2D
 
 var _was_seeing_ue: bool  = false
 var _lost_timer:    float = 0.0
+var _last_seen_body: Node2D = null
 
 @export var body: CharacterBody2D
 
@@ -29,8 +29,8 @@ func update_direction(direction: String, is_moving: bool) -> void:
 		current_direction = direction
 
 func _cast_rays(delta: float) -> void:
-	var angles   = _get_ray_angles()
-	var sees_ue  = false
+	var angles  = _get_ray_angles()
+	var sees_ue = false
 	for angle in angles:
 		var direction_vector = _direction_to_vector(current_direction).rotated(deg_to_rad(angle))
 		var target           = body.global_position + direction_vector * RAY_LENGTH
@@ -40,20 +40,22 @@ func _cast_rays(delta: float) -> void:
 		var result = space_state.intersect_ray(query)
 		if result:
 			if result.collider.is_in_group("ue"):
-				sees_ue = true
+				sees_ue         = true
+				_last_seen_body = result.collider
 				break
 
 	if sees_ue:
 		_lost_timer = 0.0
 		if not _was_seeing_ue:
 			_was_seeing_ue = true
-			spotted_ue.emit(result.collider)
+			spotted_ue.emit(_last_seen_body)
 	else:
 		if _was_seeing_ue:
 			_lost_timer -= delta
 			if _lost_timer <= -LOST_TIMER_MAX:
-				_was_seeing_ue = false
-				_lost_timer    = 0.0
+				_was_seeing_ue  = false
+				_lost_timer     = 0.0
+				_last_seen_body = null
 				lost_ue.emit()
 
 func _get_ray_angles() -> Array:
