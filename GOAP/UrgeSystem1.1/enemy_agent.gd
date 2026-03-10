@@ -19,18 +19,18 @@ var speed       := SpeedComponent.new()
 var animation   := AnimationComponent.new()
 
 # scene tree components — need node lifecycle
-@export var move_component:    MoveComponent
-@export var vision_component:  VisionComponent
-@export var chase_component:   ChaseComponent
-@export var patrol_component:  PatrolComponent
-@export var threat_component:  ThreatComponent
-@export var nav_region:        NavigationRegion2D
-@export var home_position:     Vector2
+@export var move_component:   MoveComponent
+@export var vision_component: VisionComponent
+@export var chase_component:  ChaseComponent
+@export var patrol_component: PatrolComponent
+@export var threat_component: ThreatComponent
+@export var nav_region:       NavigationRegion2D
+@export var home_position:    Vector2
 
 # current goal name — used only for inertia in the planner
 var _current_goal_name: String = "Patrol"
 
-# zone tracker — used to fire zone 2 spike exactly once on entry
+# zone tracker — used to fire zone 2 trigger exactly once on entry
 var _last_zone: int = -1
 
 # -----------------------------------------------------------------------------
@@ -85,9 +85,10 @@ func _process(delta: float) -> void:
 			var ue_to_home = ue.global_position.distance_to(home_position)
 			zone = threat_component.get_zone(ue_to_home)
 
-	# fire home_urge spike exactly once when entering zone 2
+	# zone 2 entry — spike home urge and trigger chase directly
 	if zone == 2 and _last_zone != 2:
 		urge.home_urge = min(1.0, urge.home_urge + urge.INNER_ZONE_BOOST)
+		_trigger_chase()
 	_last_zone = zone
 
 	# tick urges
@@ -101,6 +102,19 @@ func _process(delta: float) -> void:
 
 	# ask planner what guard should do
 	_replan()
+
+# -----------------------------------------------------------------------------
+# _trigger_chase — zone 2 detected, bypass planner and chase immediately
+# -----------------------------------------------------------------------------
+func _trigger_chase() -> void:
+	var ue = world_state.get_state("ue_target")
+	if ue != null and not chase_component.active:
+		print(">>> ZONE 2 — triggering chase directly")
+		patrol_component.stop()
+		world_state.set_state("patrolling", false)
+		world_state.set_state("gap_closed", false)
+		_current_goal_name = "ChaseUE"
+		chase_component.start_chase(ue)
 
 # -----------------------------------------------------------------------------
 # _replan — planner picks best goal and action, executes if different
@@ -146,13 +160,6 @@ func _execute_action(action: Dictionary) -> void:
 			world_state.set_state("patrolling", true)
 			urge.committed_to_patrol()
 			patrol_component.start()
-
-		"ChaseUE":
-			print(">>> ACTION: chasing UE")
-			patrol_component.stop()
-			var ue = world_state.get_state("ue_target")
-			if ue != null and not chase_component.active:
-				chase_component.start_chase(ue)
 
 # -----------------------------------------------------------------------------
 # _get_guard_state — reads world state to determine urge tick context
