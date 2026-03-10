@@ -1,3 +1,11 @@
+class_name WorldState
+
+# -----------------------------------------------------------------------------
+# WorldState
+# Simple key/value store for Joe's understanding of the world.
+# Single source of truth. Everything reads from here, nothing else.
+# -----------------------------------------------------------------------------
+
 var _state: Dictionary = {
 	"at_home":      false,
 	"patrolling":   false,
