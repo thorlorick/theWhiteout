@@ -19,12 +19,13 @@ var speed       := SpeedComponent.new()
 var animation   := AnimationComponent.new()
 
 # scene tree components — need node lifecycle
-@export var move_component:   MoveComponent
-@export var vision_component: VisionComponent
-@export var chase_component:  ChaseComponent
-@export var patrol_component: PatrolComponent
-@export var nav_region:       NavigationRegion2D
-@export var home_position:    Vector2
+@export var move_component:    MoveComponent
+@export var vision_component:  VisionComponent
+@export var chase_component:   ChaseComponent
+@export var patrol_component:  PatrolComponent
+@export var threat_component:  ThreatComponent
+@export var nav_region:        NavigationRegion2D
+@export var home_position:     Vector2
 
 # current goal name — used only for inertia in the planner
 var _current_goal_name: String = "Patrol"
@@ -82,9 +83,7 @@ func _process(delta: float) -> void:
 		var ue = world_state.get_state("ue_target")
 		if ue != null:
 			var ue_to_home = ue.global_position.distance_to(home_position)
-			var gap_urge   = chase_component.evaluate_threat(ue_to_home)
-			urge.set_gap_urge(gap_urge)
-			zone = chase_component.get_current_zone()
+			zone = threat_component.get_zone(ue_to_home)
 
 	# fire home_urge spike exactly once when entering zone 2
 	if zone == 2 and _last_zone != 2:
@@ -97,8 +96,7 @@ func _process(delta: float) -> void:
 	# push urge values into goals
 	goals.update_priorities(
 		urge.get_home_urge(),
-		urge.get_patrol_urge(),
-		urge.get_gap_urge()
+		urge.get_patrol_urge()
 	)
 
 	# ask planner what guard should do
