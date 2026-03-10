@@ -16,6 +16,7 @@ var world_state := WorldState.new()
 var goals       := GoalsComponent.new()
 var actions     := ActionsComponent.new()
 var speed       := SpeedComponent.new()
+var animation   := AnimationComponent.new()
 
 # scene tree components — need node lifecycle
 @export var move_component:   MoveComponent
@@ -40,12 +41,17 @@ func _ready() -> void:
 
 	# connect signals — destination_reached is NOT connected here
 	# it connects and disconnects around each specific move
+	move_component.velocity_changed.connect(animation.update)
 	move_component.velocity_changed.connect(vision_component.update_direction)
 	vision_component.spotted_ue.connect(_on_spotted_ue)
 	chase_component.move_to.connect(_on_chase_move_to)
 	chase_component.ue_caught.connect(_on_ue_caught)
 	chase_component.ue_lost.connect(_on_ue_lost)
 	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
+
+	# setup animation player
+	var anim_player = $EnemyAnimations/AnimationPlayer
+	animation.setup(anim_player)
 
 	# guard starts patrolling
 	world_state.set_state("patrolling", true)
