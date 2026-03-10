@@ -3,7 +3,7 @@ extends Node2D
 
 # -----------------------------------------------------------------------------
 # ZoneComponent
-# Sits on anything worth protecting — home, treasure, VIP.
+# Owned by EnemyAgent. Centers itself on home_position at startup.
 # Two concentric zones. If you're not in either, you're clear.
 # Fires signals when bodies enter or exit. Knows nothing about who's listening.
 # -----------------------------------------------------------------------------
@@ -16,14 +16,14 @@ signal body_exited_alert(body: Node2D)
 @export var danger_radius: float = 150.0
 @export var alert_radius:  float = 400.0
 
-# zone nodes — created at runtime from exported radii
 var _danger_zone: Area2D
 var _alert_zone:  Area2D
 
 # -----------------------------------------------------------------------------
-# _ready — build the two zones programmatically from exported radii
+# setup — called by EnemyAgent in _ready, positions zones on home
 # -----------------------------------------------------------------------------
-func _ready() -> void:
+func setup(home: Vector2) -> void:
+	global_position = home
 	_danger_zone = _build_zone("DangerZone", danger_radius)
 	_alert_zone  = _build_zone("AlertZone",  alert_radius)
 
@@ -32,9 +32,6 @@ func _ready() -> void:
 	_alert_zone.body_entered.connect(_on_alert_entered)
 	_alert_zone.body_exited.connect(_on_alert_exited)
 
-# -----------------------------------------------------------------------------
-# _build_zone — creates an Area2D with a circle collision shape
-# -----------------------------------------------------------------------------
 func _build_zone(zone_name: String, radius: float) -> Area2D:
 	var area   = Area2D.new()
 	var shape  = CollisionShape2D.new()
@@ -46,9 +43,6 @@ func _build_zone(zone_name: String, radius: float) -> Area2D:
 	add_child(area)
 	return area
 
-# -----------------------------------------------------------------------------
-# signal handlers — forward to our own signals with clean names
-# -----------------------------------------------------------------------------
 func _on_danger_entered(body: Node2D) -> void:
 	body_entered_danger.emit(body)
 
