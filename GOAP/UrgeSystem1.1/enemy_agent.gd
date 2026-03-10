@@ -5,11 +5,8 @@ extends CharacterBody2D
 # EnemyAgent
 # Lean orchestrator. Owns the components, wires signals, runs the loop.
 # Makes no decisions of its own — that's the planner's job.
-# No sticky note. No thresholds. No latches.
-# Current state is read from WorldState, not tracked separately.
 # -----------------------------------------------------------------------------
 
-# pure logic components — no scene tree presence needed
 var urge        := UrgeComponent.new()
 var planner     := PlannerComponent.new()
 var world_state := WorldState.new()
@@ -18,20 +15,19 @@ var actions     := ActionsComponent.new()
 var speed       := SpeedComponent.new()
 var animation   := AnimationComponent.new()
 
-# scene tree components — need node lifecycle
 @export var move_component:   MoveComponent
 @export var vision_component: VisionComponent
 @export var chase_component:  ChaseComponent
 @export var patrol_component: PatrolComponent
-@export var threat_component: ThreatComponent
+@export var zone_component:   ZoneComponent
 @export var nav_region:       NavigationRegion2D
 @export var home_position:    Vector2
 
-# current goal name — used only for inertia in the planner
 var _current_goal_name: String = "Patrol"
 
-# zone tracker — used to fire zone 2 trigger exactly once on entry
-var _last_zone: int = -1
+# zone state — tracked for alert tick and chase trigger
+var _in_danger_zone: bool = false
+var _in_alert_zone:  bool = false
 
 # -----------------------------------------------------------------------------
 # _ready — wire everything up, guard starts patrolling
@@ -39,12 +35,9 @@ var _last_zone: int = -1
 func _ready() -> void:
 	move_component.set_speed(speed.get_speed())
 
-	# pass geography to patrol — it needs to know where home is
 	patrol_component.nav_region    = nav_region
 	patrol_component.home_position = home_position
 
-	# connect signals — destination_reached is NOT connected here
-	# it connects and disconnects around each specific move
 	move_component.velocity_changed.connect(animation.update)
 	move_component.velocity_changed.connect(vision_component.update_direction)
 	vision_component.spotted_ue.connect(_on_spotted_ue)
@@ -53,17 +46,20 @@ func _ready() -> void:
 	chase_component.ue_lost.connect(_on_ue_lost)
 	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
 
-	# setup animation player
+	# connect zone signals
+	zone_component.body_entered_danger.connect(_on_danger_entered)
+	zone_component.body_exited_danger.connect(_on_danger_exited)
+	zone_component.body_entered_alert.connect(_on_alert_entered)
+	zone_component.body_exited_alert.connect(_on_alert_exited)
+
 	var anim_player = $EnemyAnimations/AnimationPlayer
 	animation.setup(anim_player)
 
-	# guard starts patrolling
 	world_state.set_state("patrolling", true)
 	patrol_component.start()
 
 # -----------------------------------------------------------------------------
 # _move_to — single place that sets a target and listens for arrival
-# connects destination_reached fresh each time so it fires exactly once
 # -----------------------------------------------------------------------------
 func _move_to(pos: Vector2) -> void:
 	if move_component.destination_reached.is_connected(_on_destination_reached):
@@ -77,22 +73,12 @@ func _move_to(pos: Vector2) -> void:
 func _process(delta: float) -> void:
 	var guard_state: String = _get_guard_state()
 
-	# figure out current threat zone (needs UE position if visible)
-	var zone: int = -1
-	if world_state.get_state("sees_ue"):
-		var ue = world_state.get_state("ue_target")
-		if ue != null:
-			var ue_to_home = ue.global_position.distance_to(home_position)
-			zone = threat_component.get_zone(ue_to_home)
-
-	# zone 2 entry — spike home urge and trigger chase directly
-	if zone == 2 and _last_zone != 2:
-		urge.home_urge = min(1.0, urge.home_urge + urge.INNER_ZONE_BOOST)
-		_trigger_chase()
-	_last_zone = zone
+	# apply alert zone pressure every frame while UE is in alert zone
+	if _in_alert_zone:
+		urge.on_alert_tick(delta)
 
 	# tick urges
-	urge.tick(delta, guard_state, zone)
+	urge.tick(delta, guard_state)
 
 	# push urge values into goals
 	goals.update_priorities(
@@ -100,16 +86,15 @@ func _process(delta: float) -> void:
 		urge.get_patrol_urge()
 	)
 
-	# ask planner what guard should do
 	_replan()
 
 # -----------------------------------------------------------------------------
-# _trigger_chase — zone 2 detected, bypass planner and chase immediately
+# _trigger_chase — danger zone entered, bypass planner and chase immediately
 # -----------------------------------------------------------------------------
 func _trigger_chase() -> void:
 	var ue = world_state.get_state("ue_target")
 	if ue != null and not chase_component.active:
-		print(">>> ZONE 2 — triggering chase directly")
+		print(">>> DANGER ZONE — triggering chase directly")
 		patrol_component.stop()
 		world_state.set_state("patrolling", false)
 		world_state.set_state("gap_closed", false)
@@ -122,7 +107,6 @@ func _trigger_chase() -> void:
 func _replan() -> void:
 	var best_goal = planner.get_best_goal(goals.goals, _current_goal_name)
 
-	# goal already satisfied — nothing to do
 	if planner.is_goal_satisfied(best_goal, world_state):
 		return
 
@@ -130,7 +114,6 @@ func _replan() -> void:
 	if best_action.is_empty():
 		return
 
-	# only execute if something actually changed
 	if best_goal["name"] != _current_goal_name:
 		_current_goal_name = best_goal["name"]
 		print(">>> REPLAN — goal: %s | action: %s (priority: %.2f cost: %.2f)" % [
@@ -172,6 +155,36 @@ func _get_guard_state() -> String:
 	return "patrolling"
 
 # -----------------------------------------------------------------------------
+# ZONE SIGNAL HANDLERS
+# -----------------------------------------------------------------------------
+
+func _on_danger_entered(body: Node2D) -> void:
+	if not body.is_in_group("ue"):
+		return
+	print(">>> UE ENTERED DANGER ZONE")
+	_in_danger_zone = true
+	urge.on_danger_entered()
+	_trigger_chase()
+
+func _on_danger_exited(body: Node2D) -> void:
+	if not body.is_in_group("ue"):
+		return
+	print(">>> UE EXITED DANGER ZONE")
+	_in_danger_zone = false
+
+func _on_alert_entered(body: Node2D) -> void:
+	if not body.is_in_group("ue"):
+		return
+	print(">>> UE ENTERED ALERT ZONE")
+	_in_alert_zone = true
+
+func _on_alert_exited(body: Node2D) -> void:
+	if not body.is_in_group("ue"):
+		return
+	print(">>> UE EXITED ALERT ZONE")
+	_in_alert_zone = false
+
+# -----------------------------------------------------------------------------
 # SIGNAL HANDLERS
 # -----------------------------------------------------------------------------
 
@@ -192,6 +205,7 @@ func _on_spotted_ue(ue_body: Node2D) -> void:
 	if world_state.get_state("sees_ue"):
 		return
 	print(">>> UE SPOTTED")
+	patrol_component.stop()
 	world_state.set_state("sees_ue", true)
 	world_state.set_state("ue_target", ue_body)
 	world_state.set_state("gap_closed", false)
@@ -205,10 +219,14 @@ func _on_ue_caught() -> void:
 	world_state.set_state("ue_target", null)
 	world_state.set_state("gap_closed", true)
 	chase_component.stop_chase()
+	move_component.stop()
 
 func _on_ue_lost() -> void:
-	print(">>> UE LOST — resuming")
+	print(">>> UE LOST — moving to last known position")
+	var ue = world_state.get_state("ue_target")
+	var last_known = ue.global_position if ue != null else home_position
 	world_state.set_state("sees_ue", false)
 	world_state.set_state("ue_target", null)
 	world_state.set_state("gap_closed", true)
 	chase_component.stop_chase()
+	_move_to(last_known)
