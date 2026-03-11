@@ -218,9 +218,12 @@ func _on_alert_exited(body: Node2D) -> void:
 func _on_destination_reached() -> void:
 	if _current_goal_name == "BeHome":
 		print(">>> ARRIVED HOME")
-		world_state.set_state("at_home",    true)
-		world_state.set_state("patrolling", false)
-		world_state.set_state("gap_closed", true)
+		world_state.set_state("at_home",      true)
+		world_state.set_state("patrolling",   false)
+		world_state.set_state("gap_closed",   true)
+		world_state.set_state("target_lost",  false)
+		world_state.set_state("target_found", true)
+		search_component.stop()
 		move_component.stop()
 	elif _current_goal_name == "FindLostTarget":
 		search_component.arrived()
@@ -256,20 +259,27 @@ func _on_lost_ue() -> void:
 	_last_known_position  = ue.global_position if ue != null else home_position
 	_last_known_direction = (ue.global_position - global_position).normalized() if ue != null else Vector2.ZERO
 	world_state.set_state("sees_ue",      false)
+	world_state.set_state("target_lost",  true)
+	world_state.set_state("target_found", false)
 	urge.on_ue_lost()
 
 func _on_chase_move_to(position: Vector2) -> void:
 	move_component.set_target(position)
 
 func _on_ue_caught() -> void:
-	print(">>> UE CAUGHT — attack coming later")
+	print(">>> UE CAUGHT — eliminated")
+	var ue = world_state.get_state("ue_target")
+	if ue != null:
+		ue.queue_free()
 	world_state.set_state("sees_ue",      false)
 	world_state.set_state("ue_target",    null)
 	world_state.set_state("gap_closed",   true)
 	world_state.set_state("target_lost",  false)
 	world_state.set_state("target_found", true)
+	vision_component.clear_target()
 	chase_component.stop_chase()
 	move_component.stop()
+	search_component.stop()
 
 func _on_ue_lost() -> void:
 	print(">>> CHASE: ue lost — handing off to vision")
