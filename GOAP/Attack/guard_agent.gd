@@ -12,6 +12,8 @@ var goals       := GoalsComponent.new()
 var actions     := ActionsComponent.new()
 var speed       := SpeedComponent.new()
 var animation   := AnimationComponent.new()
+var health      := HealthComponent.new()
+var attack      := AttackComponent.new()
 
 @export var move_component:   MoveComponent
 @export var vision_component: VisionComponent
@@ -62,6 +64,9 @@ func _ready() -> void:
 	zone_component.body_entered_alert.connect(_on_alert_entered)
 	zone_component.body_exited_alert.connect(_on_alert_exited)
 
+	attack.attack_landed.connect(_on_attack_landed)
+	health.died.connect(_on_guard_died)
+
 	var anim_player = $EnemyAnimations/AnimationPlayer
 	animation.setup(anim_player)
 
@@ -85,7 +90,7 @@ func _move_to(pos: Vector2) -> void:
 	move_component.set_target(pos)
 
 # -----------------------------------------------------------------------------
-# _process — urges tick, priorities update, planner runs every frame
+# _process — urges tick, attack ticks, priorities update, planner runs
 # -----------------------------------------------------------------------------
 func _process(delta: float) -> void:
 	var guard_state: String = _get_guard_state()
@@ -94,6 +99,7 @@ func _process(delta: float) -> void:
 		urge.on_alert_tick(delta)
 
 	urge.tick(delta, guard_state)
+	attack.tick(delta)
 
 	goals.update_priorities(
 		urge.get_comfort_urge(),
@@ -113,9 +119,9 @@ func _trigger_chase() -> void:
 		print(">>> DANGER ZONE — triggering chase directly")
 		patrol_component.stop()
 		search_component.stop()
-		world_state.set_state("patrolling",  false)
-		world_state.set_state("gap_closed",  false)
-		world_state.set_state("target_lost", false)
+		world_state.set_state("patrolling",   false)
+		world_state.set_state("gap_closed",   false)
+		world_state.set_state("target_lost",  false)
 		world_state.set_state("target_found", true)
 		_current_goal_name = "ChaseUE"
 		chase_component.start_chase(ue)
@@ -170,16 +176,17 @@ func _execute_action(action: Dictionary) -> void:
 			if ue != null and not chase_component.active:
 				patrol_component.stop()
 				search_component.stop()
-				world_state.set_state("patrolling",  false)
-				world_state.set_state("gap_closed",  false)
-				world_state.set_state("target_lost", false)
+				world_state.set_state("patrolling",   false)
+				world_state.set_state("gap_closed",   false)
+				world_state.set_state("target_lost",  false)
 				world_state.set_state("target_found", true)
 				chase_component.start_chase(ue)
 
 		"Attack":
 			print(">>> ACTION: attacking UE")
-			# AttackComponent will be wired here once built
-			# attack_component.try_attack(world_state.get_state("ue_target"))
+			var ue = world_state.get_state("ue_target")
+			if ue != null:
+				attack.try_attack(ue)
 
 		"Search":
 			print(">>> ACTION: searching for lost target")
@@ -290,7 +297,7 @@ func _on_gap_closed() -> void:
 	world_state.set_state("gap_closed", true)
 	urge.on_gap_closed()
 
-func _on_hit_landed() -> void:
+func _on_attack_landed(_target: Node) -> void:
 	urge.on_hit_landed()
 
 func _on_chase_move_to(position: Vector2) -> void:
@@ -298,7 +305,7 @@ func _on_chase_move_to(position: Vector2) -> void:
 
 func _on_ue_caught() -> void:
 	print(">>> UE CAUGHT — eliminated")
-	_on_hit_landed()
+	_on_attack_landed(null)
 	var ue = world_state.get_state("ue_target")
 	if ue != null:
 		ue.queue_free()
@@ -319,3 +326,12 @@ func _on_ue_lost() -> void:
 	world_state.set_state("target_found", false)
 	world_state.set_state("gap_closed",   false)
 	chase_component.stop_chase()
+
+func _on_guard_died() -> void:
+	print(">>> GUARD: died")
+	set_process(false)
+	move_component.stop()
+	chase_component.stop_chase()
+	patrol_component.stop()
+	search_component.stop()
+	queue_free()
