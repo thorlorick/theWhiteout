@@ -74,3 +74,8 @@ func _direction_to_vector(dir: String) -> Vector2:
 		"left":  return Vector2.LEFT
 		"right": return Vector2.RIGHT
 	return Vector2.DOWN
+	
+func clear_target() -> void:
+	_was_seeing_ue  = false
+	_lost_timer     = 0.0
+	_last_seen_body = null
