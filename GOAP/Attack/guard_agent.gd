@@ -138,7 +138,7 @@ func _trigger_chase() -> void:
 # _replan — planner picks best goal and action, executes if different
 # -----------------------------------------------------------------------------
 func _replan() -> void:
-	var best_goal = planner.get_best_goal(goals.goals, _current_goal_name, actions.actions, world_state)
+	var best_goal = planner.get_best_goal(goals.goals, _current_goal_name)
 
 	if planner.is_goal_satisfied(best_goal, world_state):
 		return
