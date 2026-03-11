@@ -1,4 +1,6 @@
 class_name HealthComponent
+extends Node
+
 # -----------------------------------------------------------------------------
 # HealthComponent
 # Tracks current and max health for any entity.
