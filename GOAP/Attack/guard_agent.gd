@@ -22,6 +22,7 @@ var attack      := AttackComponent.new()
 @export var search_component: SearchComponent
 @export var nav_region:       NavigationRegion2D
 @export var home_position:    Vector2
+@export var personality: PersonalityResource
 
 @export var damage: float = 10.0  # orchestrator owns damage value
 
@@ -36,6 +37,8 @@ var _in_alert_zone:  bool = false
 # _ready — wire everything up, guard starts patrolling
 # -----------------------------------------------------------------------------
 func _ready() -> void:
+	if personality != null:
+    	actions.apply_personality(personality)
 	add_child(attack)
 
 	move_component.set_speed(speed.get_speed())
