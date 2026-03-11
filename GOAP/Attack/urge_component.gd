@@ -82,6 +82,14 @@ func on_danger_entered() -> void:
 	print(">>> URGE: danger zone entered")
 
 # -----------------------------------------------------------------------------
+# on_ue_spotted — small threat response — Joe sees the enemy
+# -----------------------------------------------------------------------------
+func on_ue_spotted() -> void:
+	comfort_urge    = max(COMFORT_URGE_REST, comfort_urge - 0.1)
+	aggression_urge = min(1.0, aggression_urge + 0.1)
+	print(">>> URGE: ue spotted — threat registered")
+
+# -----------------------------------------------------------------------------
 # on_alert_tick — slow pressure per frame in alert zone
 # -----------------------------------------------------------------------------
 func on_alert_tick(delta: float) -> void:
