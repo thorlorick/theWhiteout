@@ -11,7 +11,7 @@ var curiosity_urge: float = 0.0
 
 var _print_timer: float = 0.0
 
-const HOME_URGE_BUILD_RATE:      float = 0.04
+const HOME_URGE_BUILD_RATE:      float = 0.02
 const PATROL_URGE_BUILD_RATE:    float = 0.02
 const CURIOSITY_URGE_BUILD_RATE: float = 0.0
 
@@ -59,8 +59,7 @@ func tick(delta: float, state: String) -> void:
 # on_danger_entered — immediate spike — threat is at the doorstep
 # -----------------------------------------------------------------------------
 func on_danger_entered() -> void:
-	home_urge = min(1.0, home_urge + DANGER_ZONE_BOOST)
-	print(">>> URGE: danger zone entered — home urge spiked")
+	print(">>> URGE: danger zone entered")
 
 # -----------------------------------------------------------------------------
 # on_alert_tick — slow pressure per frame in alert zone
