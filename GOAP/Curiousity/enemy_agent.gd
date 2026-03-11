@@ -39,7 +39,7 @@ func _ready() -> void:
 	patrol_component.home_position = home_position
 	search_component.nav_region    = nav_region
 
-	zone_component.setup(home_position)
+	zone_component.setup()
 
 	move_component.velocity_changed.connect(animation.update)
 	move_component.velocity_changed.connect(vision_component.update_direction)
