@@ -23,6 +23,8 @@ var attack      := AttackComponent.new()
 @export var nav_region:       NavigationRegion2D
 @export var home_position:    Vector2
 
+@export var damage: float = 10.0  # orchestrator owns damage value
+
 var _current_goal_name: String = "Patrol"
 var _last_known_position: Vector2 = Vector2.ZERO
 var _last_known_direction: Vector2 = Vector2.ZERO
@@ -53,6 +55,9 @@ func _ready() -> void:
 	chase_component.move_to.connect(_on_chase_move_to)
 	chase_component.gap_closed.connect(_on_gap_closed)
 	chase_component.ue_lost.connect(_on_ue_lost)
+
+	# AttackComponent says "I hit something" — guard decides what that means
+	attack.attack_landed.connect(_on_attack_landed)
 
 	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
 
@@ -104,7 +109,7 @@ func _process(delta: float) -> void:
 		urge.get_aggression_urge()
 	)
 
-	# Attack loop — runs every frame when in strike range, respects cooldown
+	# Attack loop — runs every frame in strike range, cooldown handled internally
 	if guard_state == "attacking":
 		var ue = world_state.get_state("ue_target")
 		if ue != null:
@@ -246,6 +251,16 @@ func _on_alert_exited(body: Node2D) -> void:
 # SIGNAL HANDLERS
 # -----------------------------------------------------------------------------
 
+func _on_attack_landed(target: Node) -> void:
+	# Guard is the orchestrator — it knows about both attack and health
+	# Components stay blind to each other
+	var health = target.get_node_or_null("HealthComponent")
+	if health == null:
+		return
+	health.take_damage(damage)
+	urge.on_hit_landed()
+	print(">>> AGENT: dealt %.1f damage to UE" % damage)
+
 func _on_destination_reached() -> void:
 	if _current_goal_name == "BeHome":
 		print(">>> ARRIVED HOME")
@@ -284,9 +299,10 @@ func _on_spotted_ue(ue_body: Node2D) -> void:
 	world_state.set_state("target_lost",  false)
 	world_state.set_state("target_found", true)
 
-	# Wire death signal so guard knows when UE is eliminated
-	if ue_body.has_node("HealthComponent"):
-		ue_body.get_node("HealthComponent").died.connect(_on_ue_died)
+	# Wire UE death signal the moment we spot them
+	var health = ue_body.get_node_or_null("HealthComponent")
+	if health != null:
+		health.died.connect(_on_ue_died)
 
 func _on_lost_ue() -> void:
 	print(">>> VISION: lost sight of UE — curiosity spike")
@@ -303,12 +319,6 @@ func _on_gap_closed() -> void:
 	world_state.set_state("gap_closed", true)
 	urge.on_gap_closed()
 
-func _on_hit_landed() -> void:
-	urge.on_hit_landed()
-
-func _on_chase_move_to(position: Vector2) -> void:
-	move_component.set_target(position)
-
 func _on_ue_died() -> void:
 	print(">>> UE DIED — cleaning up")
 	var ue = world_state.get_state("ue_target")
@@ -324,7 +334,9 @@ func _on_ue_died() -> void:
 	chase_component.stop_chase()
 	move_component.stop()
 	search_component.stop()
-	urge.on_hit_landed()
+
+func _on_chase_move_to(position: Vector2) -> void:
+	move_component.set_target(position)
 
 func _on_ue_lost() -> void:
 	print(">>> CHASE: ue lost — handing off to vision")
