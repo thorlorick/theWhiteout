@@ -2,15 +2,14 @@ class_name AttackComponent
 # -----------------------------------------------------------------------------
 # AttackComponent
 # Handles attack timing and cooldowns.
-# Deals damage to a HealthComponent.
-# Knows nothing about movement or range — that's the caller's job.
+# Knows nothing about health, damage, or what it's hitting.
+# Emits attack_landed and lets the orchestrator decide what happens next.
 # -----------------------------------------------------------------------------
 signal attack_landed(target: Node)
 
-@export var damage:   float = 10.0
 @export var cooldown: float = 1.0  # seconds between attacks
 
-var _timer: float = 0.0
+var _timer:          float = 0.0
 var _ready_to_attack: bool = true
 
 # -----------------------------------------------------------------------------
@@ -24,16 +23,16 @@ func tick(delta: float) -> void:
 			print(">>> ATTACK: ready")
 
 # -----------------------------------------------------------------------------
-# try_attack — attempt to hit a target, respects cooldown
+# try_attack — attempt a hit, respects cooldown
+# does not touch the target — just says "I hit it" and walks away
 # -----------------------------------------------------------------------------
 func try_attack(target: Node) -> void:
 	if not _ready_to_attack:
 		return
-	if not target.has_method("take_damage"):
+	if target == null:
 		return
-	target.take_damage(damage)
 	emit_signal("attack_landed", target)
-	print(">>> ATTACK: hit for %.1f damage" % damage)
+	print(">>> ATTACK: landed")
 	_ready_to_attack = false
 	_timer = cooldown
 
