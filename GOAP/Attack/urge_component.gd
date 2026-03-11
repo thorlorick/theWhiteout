@@ -53,6 +53,7 @@ func tick(delta: float, state: String) -> void:
 		"chasing":
 			# Guard is focused — comfort fades, aggression builds
 			comfort_urge    = _decay_toward(comfort_urge, COMFORT_URGE_REST, COMFORT_URGE_DECAY_RATE, delta)
+			duty_urge       = _decay_toward(duty_urge, DUTY_URGE_REST, DUTY_URGE_DECAY_RATE, delta)
 			curiosity_urge  = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, CURIOSITY_URGE_DECAY_RATE, delta)
 			aggression_urge = min(1.0, aggression_urge + AGGRESSION_URGE_BUILD_RATE * delta)
 		"searching":
@@ -63,6 +64,7 @@ func tick(delta: float, state: String) -> void:
 			# Guard is in the fight — comfort fades, aggression decays slowly
 			# Refreshed by on_hit_landed so sustained attacks keep aggression up
 			comfort_urge    = _decay_toward(comfort_urge, COMFORT_URGE_REST, COMFORT_URGE_DECAY_RATE, delta)
+			duty_urge       = _decay_toward(duty_urge, DUTY_URGE_REST, DUTY_URGE_DECAY_RATE, delta)
 			curiosity_urge  = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, CURIOSITY_URGE_DECAY_RATE, delta)
 			aggression_urge = _decay_toward(aggression_urge, AGGRESSION_URGE_REST, AGGRESSION_URGE_DECAY_RATE * 0.5, delta)
 
