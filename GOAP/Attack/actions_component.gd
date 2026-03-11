@@ -36,3 +36,16 @@ var actions: Array = [
 		"effects":       {"target_found": true}
 	},
 ]
+
+# -----------------------------------------------------------------------------
+# apply_personality — called once by GuardAgent in _ready()
+# multiplies base costs by personality values
+# -----------------------------------------------------------------------------
+func apply_personality(p: PersonalityResource) -> void:
+	for action in actions:
+		match action["name"]:
+			"GoHome":   action["cost"] *= p.go_home_cost
+			"GoPatrol": action["cost"] *= p.go_patrol_cost
+			"ChaseUE":  action["cost"] *= p.chase_cost
+			"Attack":   action["cost"] *= p.attack_cost
+			"Search":   action["cost"] *= p.search_cost
