@@ -291,9 +291,9 @@ func _on_spotted_ue(ue_body: Node2D) -> void:
 	if world_state.get_state("sees_ue"):
 		return
 	print(">>> UE SPOTTED")
-	urge.on_ue_spotted()
 	patrol_component.stop()
 	search_component.stop()
+	urge.on_ue_spotted()
 	world_state.set_state("sees_ue",      true)
 	world_state.set_state("ue_target",    ue_body)
 	world_state.set_state("gap_closed",   false)
