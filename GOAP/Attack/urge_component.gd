@@ -35,23 +35,24 @@ const AGGRESSION_SPIKE:   float = 0.8
 const HIT_LANDED_BONUS:   float = 0.1
 
 # -----------------------------------------------------------------------------
-# tick — called every frame by EnemyAgent
+# tick — called every frame by GuardAgent
 # state: "at_home" | "patrolling" | "chasing" | "searching" | "attacking"
 # -----------------------------------------------------------------------------
 func tick(delta: float, state: String) -> void:
 	match state:
 		"at_home":
-			duty_urge      = min(1.0, duty_urge + DUTY_URGE_BUILD_RATE * delta)
-			comfort_urge   = _decay_toward(comfort_urge, COMFORT_URGE_REST, COMFORT_URGE_DECAY_RATE, delta)
-			curiosity_urge = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, CURIOSITY_URGE_DECAY_RATE, delta)
+			duty_urge       = min(1.0, duty_urge + DUTY_URGE_BUILD_RATE * delta)
+			comfort_urge    = _decay_toward(comfort_urge, COMFORT_URGE_REST, COMFORT_URGE_DECAY_RATE, delta)
+			curiosity_urge  = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, CURIOSITY_URGE_DECAY_RATE, delta)
 			aggression_urge = _decay_toward(aggression_urge, AGGRESSION_URGE_REST, AGGRESSION_URGE_DECAY_RATE, delta)
 		"patrolling":
-			comfort_urge   = min(1.0, comfort_urge + COMFORT_URGE_BUILD_RATE * delta)
-			duty_urge      = _decay_toward(duty_urge, DUTY_URGE_REST, DUTY_URGE_DECAY_RATE, delta)
-			curiosity_urge = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, CURIOSITY_URGE_DECAY_RATE, delta)
+			comfort_urge    = min(1.0, comfort_urge + COMFORT_URGE_BUILD_RATE * delta)
+			duty_urge       = _decay_toward(duty_urge, DUTY_URGE_REST, DUTY_URGE_DECAY_RATE, delta)
+			curiosity_urge  = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, CURIOSITY_URGE_DECAY_RATE, delta)
 			aggression_urge = _decay_toward(aggression_urge, AGGRESSION_URGE_REST, AGGRESSION_URGE_DECAY_RATE, delta)
 		"chasing":
-			comfort_urge    = min(1.0, comfort_urge + COMFORT_URGE_BUILD_RATE * delta)
+			# Guard is focused — comfort fades, aggression builds
+			comfort_urge    = _decay_toward(comfort_urge, COMFORT_URGE_REST, COMFORT_URGE_DECAY_RATE, delta)
 			curiosity_urge  = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, CURIOSITY_URGE_DECAY_RATE, delta)
 			aggression_urge = min(1.0, aggression_urge + AGGRESSION_URGE_BUILD_RATE * delta)
 		"searching":
@@ -59,8 +60,10 @@ func tick(delta: float, state: String) -> void:
 			curiosity_urge  = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, CURIOSITY_URGE_DECAY_RATE, delta)
 			aggression_urge = _decay_toward(aggression_urge, AGGRESSION_URGE_REST, AGGRESSION_URGE_DECAY_RATE, delta)
 		"attacking":
-			comfort_urge    = min(1.0, comfort_urge + COMFORT_URGE_BUILD_RATE * delta)
-			# Slow decay while fighting; refreshed by on_hit_landed
+			# Guard is in the fight — comfort fades, aggression decays slowly
+			# Refreshed by on_hit_landed so sustained attacks keep aggression up
+			comfort_urge    = _decay_toward(comfort_urge, COMFORT_URGE_REST, COMFORT_URGE_DECAY_RATE, delta)
+			curiosity_urge  = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, CURIOSITY_URGE_DECAY_RATE, delta)
 			aggression_urge = _decay_toward(aggression_urge, AGGRESSION_URGE_REST, AGGRESSION_URGE_DECAY_RATE * 0.5, delta)
 
 	_print_timer -= delta
@@ -83,14 +86,14 @@ func on_alert_tick(delta: float) -> void:
 	comfort_urge = min(1.0, comfort_urge + ALERT_ZONE_BOOST * delta)
 
 # -----------------------------------------------------------------------------
-# on_ue_lost — curiosity spikes when Joe loses sight of the UE
+# on_ue_lost — curiosity spikes when guard loses sight of the UE
 # -----------------------------------------------------------------------------
 func on_ue_lost() -> void:
 	curiosity_urge = min(1.0, curiosity_urge + CURIOSITY_SPIKE)
 	print(">>> URGE: ue lost — curiosity spiked")
 
 # -----------------------------------------------------------------------------
-# on_gap_closed — aggression spikes when Joe gets close enough to strike
+# on_gap_closed — aggression spikes when guard gets close enough to strike
 # -----------------------------------------------------------------------------
 func on_gap_closed() -> void:
 	aggression_urge = max(aggression_urge, AGGRESSION_SPIKE)
@@ -126,7 +129,7 @@ func _decay_toward(current: float, target: float, rate: float, delta: float) -> 
 		return max(target, current - rate * delta)
 	return current
 
-func get_comfort_urge()   -> float: return comfort_urge
-func get_duty_urge()      -> float: return duty_urge
-func get_curiosity_urge() -> float: return curiosity_urge
+func get_comfort_urge()    -> float: return comfort_urge
+func get_duty_urge()       -> float: return duty_urge
+func get_curiosity_urge()  -> float: return curiosity_urge
 func get_aggression_urge() -> float: return aggression_urge
