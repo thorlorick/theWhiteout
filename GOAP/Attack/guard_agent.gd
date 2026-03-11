@@ -339,8 +339,9 @@ func _on_chase_move_to(position: Vector2) -> void:
 	move_component.set_target(position)
 
 func _on_ue_lost() -> void:
-	print(">>> CHASE: ue lost — handing off to vision")
-	world_state.set_state("target_lost",  true)
-	world_state.set_state("target_found", false)
+	print(">>> CHASE: ue lost — giving up")
+	world_state.set_state("target_lost",  false)
+	world_state.set_state("target_found", true)
+	world_state.set_state("sees_ue",      false)
 	world_state.set_state("gap_closed",   false)
 	chase_component.stop_chase()
