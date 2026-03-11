@@ -23,6 +23,6 @@ var goals: Array = [
 ]
 
 func update_priorities(comfort: float, duty: float, curiosity: float) -> void:
-	goals[0]["priority"] = home
-	goals[1]["priority"] = patrol
+	goals[0]["priority"] = comfort
+	goals[1]["priority"] = duty
 	goals[2]["priority"] = curiosity
