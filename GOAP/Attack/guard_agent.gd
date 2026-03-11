@@ -1,8 +1,8 @@
 
-class_name EnemyAgent
+class_name GuardAgent
 extends CharacterBody2D
 # -----------------------------------------------------------------------------
-# EnemyAgent
+# GuardAgent
 # Lean orchestrator. Owns the components, wires signals, runs the loop.
 # Makes no decisions of its own — that's the planner's job.
 # -----------------------------------------------------------------------------
