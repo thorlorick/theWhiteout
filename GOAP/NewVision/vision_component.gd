@@ -23,7 +23,7 @@ const MIN_DISTANCE:     float = 30.0
 
 const ALERT_DISTANCE:   float = 150.0   # ~9 tiles — meter filling
 const DANGER_DISTANCE:  float = 100.0   # ~6 tiles — confirmed, trigger chase
-const STRIKE_DISTANCE:  float = 50.0    # ~3 tiles — gap closed, attack
+const STRIKE_DISTANCE:  float = 30.0    # ~1 tiles — gap closed, attack
 
 # sweep
 const SWEEP_ANGLE:      float = 25.0
@@ -186,7 +186,7 @@ func _cast_rays(delta: float) -> void:
 			danger_range.emit(_last_seen_body)
 
 		# --- gap closed — attack range
-		if _detection_confirmed and dist <= STRIKE_DISTANCE and not _gap_closed:
+		if _was_seeing_ue and dist <= STRIKE_DISTANCE and not _gap_closed:
 			_gap_closed = true
 			print(">>> VISION: gap closed — strike distance reached")
 
