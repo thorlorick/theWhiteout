@@ -49,9 +49,9 @@ func _ready() -> void:
 
 	vision_component.spotted_ue.connect(_on_spotted_ue)
 	vision_component.lost_ue.connect(_on_lost_ue)
+	vision_component.gap_closed.connect(_on_gap_closed)
 
 	chase_component.move_to.connect(_on_chase_move_to)
-	chase_component.gap_closed.connect(_on_gap_closed)
 	chase_component.ue_lost.connect(_on_ue_lost)
 
 	attack.attack_landed.connect(_on_attack_landed)
