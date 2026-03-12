@@ -6,14 +6,17 @@ extends Node2D
 # When idle, plays a look-around sequence before settling.
 # Facing is a Vector2 — no hardwired strings.
 # Detection meter fills on evidence, drains on nothing — no flicker.
+# Now owns gap_closed — vision measures distance, vision reports contact.
 # -----------------------------------------------------------------------------
 signal spotted_ue(body)
+signal gap_closed()
 signal lost_ue()
 
 const RAY_COUNT:       int   = 5
 const RAY_LENGTH:      float = 200.0
 const LOST_TIMER_MAX:  float = 0.5
 const MIN_DISTANCE:    float = 30.0
+const STRIKE_DISTANCE: float = 50.0   # close enough — gap is closed
 
 # sweep
 const SWEEP_ANGLE:     float = 25.0
@@ -50,6 +53,9 @@ var _homing:            bool  = false
 # detection meter — fills with evidence, fires when full
 var _detection_value:     float = 0.0
 var _detection_confirmed: bool  = false
+
+# gap tracking — only emit once per contact
+var _gap_closed:          bool  = false
 
 @export var body: CharacterBody2D
 
@@ -138,7 +144,7 @@ func _cast_rays(delta: float) -> void:
 				_last_seen_body = result.collider
 
 	if hits > 0:
-		# home gaze toward flicker
+		# home gaze toward target
 		_homing            = true
 		_gaze_target_angle = _sweep_angle + hit_angle
 
@@ -153,9 +159,15 @@ func _cast_rays(delta: float) -> void:
 			_lost_timer          = 0.0
 			spotted_ue.emit(_last_seen_body)
 
-		# already confirmed — reset lost timer
-		if _was_seeing_ue:
+		# confirmed sighting — check gap
+		if _detection_confirmed and _last_seen_body != null:
 			_lost_timer = 0.0
+			var dist = body.global_position.distance_to(_last_seen_body.global_position)
+			if dist <= STRIKE_DISTANCE and not _gap_closed:
+				_gap_closed = true
+				print(">>> VISION: gap closed — strike distance reached")
+				gap_closed.emit()
+
 	else:
 		# nothing seen — drain meter
 		_detection_value = max(0.0, _detection_value - DRAIN_RATE * delta)
@@ -173,6 +185,7 @@ func _cast_rays(delta: float) -> void:
 				_lost_timer          = 0.0
 				_last_seen_body      = null
 				_homing              = false
+				_gap_closed          = false
 				lost_ue.emit()
 
 func clear_target() -> void:
@@ -182,3 +195,4 @@ func clear_target() -> void:
 	_lost_timer          = 0.0
 	_last_seen_body      = null
 	_homing              = false
+	_gap_closed          = false
