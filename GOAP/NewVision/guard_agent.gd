@@ -59,6 +59,7 @@ func _ready() -> void:
 	vision_component.alert_range.connect(_on_alert_entered)
 	vision_component.danger_range.connect(_on_danger_entered)
 	vision_component.range_lost.connect(_on_range_lost)
+	vision_component.gap_closed_signal.connect(_on_gap_closed)
 
 	# chase
 	chase_component.move_to.connect(_on_chase_move_to)
@@ -258,6 +259,10 @@ func _on_range_lost(body: Node2D) -> void:
 # -----------------------------------------------------------------------------
 
 func _on_attack_landed(target: Node) -> void:
+	if not is_instance_valid(target):  # ← is it still alive/in the scene?
+		return
+	if world_state.get_state("ue_eliminated"):  # ← has death already been handled?
+		return
 	var health = target.get_node_or_null("HealthComponent")
 	if health == null:
 		return
