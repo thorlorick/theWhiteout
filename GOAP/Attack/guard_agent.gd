@@ -22,9 +22,9 @@ var attack      := AttackComponent.new()
 @export var search_component: SearchComponent
 @export var nav_region:       NavigationRegion2D
 @export var home_position:    Vector2
-@export var personality: PersonalityResource
+@export var personality:      PersonalityResource
 
-@export var damage: float = 10.0  # orchestrator owns damage value
+@export var damage: float = 10.0
 
 var _current_goal_name: String = "Patrol"
 var _last_known_position: Vector2 = Vector2.ZERO
@@ -38,7 +38,8 @@ var _in_alert_zone:  bool = false
 # -----------------------------------------------------------------------------
 func _ready() -> void:
 	if personality != null:
-    	actions.apply_personality(personality)
+		actions.apply_personality(personality)
+
 	add_child(attack)
 
 	move_component.set_speed(speed.get_speed())
@@ -59,7 +60,6 @@ func _ready() -> void:
 	chase_component.gap_closed.connect(_on_gap_closed)
 	chase_component.ue_lost.connect(_on_ue_lost)
 
-	# AttackComponent says "I hit something" — guard decides what that means
 	attack.attack_landed.connect(_on_attack_landed)
 
 	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
@@ -86,15 +86,6 @@ func _ready() -> void:
 	patrol_component.start()
 
 # -----------------------------------------------------------------------------
-# _move_to — single place that sets a target and listens for arrival
-# -----------------------------------------------------------------------------
-func _move_to(pos: Vector2) -> void:
-	if move_component.destination_reached.is_connected(_on_destination_reached):
-		move_component.destination_reached.disconnect(_on_destination_reached)
-	move_component.destination_reached.connect(_on_destination_reached, CONNECT_ONE_SHOT)
-	move_component.set_target(pos)
-
-# -----------------------------------------------------------------------------
 # _process — urges tick, priorities update, planner runs every frame
 # -----------------------------------------------------------------------------
 func _process(delta: float) -> void:
@@ -112,7 +103,6 @@ func _process(delta: float) -> void:
 		urge.get_aggression_urge()
 	)
 
-	# Attack loop — runs every frame in strike range, cooldown handled internally
 	if guard_state == "attacking":
 		var ue = world_state.get_state("ue_target")
 		if ue != null:
@@ -126,16 +116,20 @@ func _process(delta: float) -> void:
 # -----------------------------------------------------------------------------
 func _trigger_chase() -> void:
 	var ue = world_state.get_state("ue_target")
-	if ue != null and not chase_component.active:
-		print(">>> DANGER ZONE — triggering chase directly")
-		patrol_component.stop()
-		search_component.stop()
-		world_state.set_state("patrolling",  false)
-		world_state.set_state("gap_closed",  false)
-		world_state.set_state("target_lost", false)
-		world_state.set_state("target_found", true)
-		_current_goal_name = "ChaseUE"
-		chase_component.start_chase(ue)
+	if ue == null:
+		print(">>> DANGER ZONE — no target acquired, sneaking succeeded")
+		return
+	if chase_component.active:
+		return
+	print(">>> DANGER ZONE — triggering chase directly")
+	patrol_component.stop()
+	search_component.stop()
+	world_state.set_state("patrolling",   false)
+	world_state.set_state("gap_closed",   false)
+	world_state.set_state("target_lost",  false)
+	world_state.set_state("target_found", true)
+	_current_goal_name = "ChaseUE"
+	chase_component.start_chase(ue)
 
 # -----------------------------------------------------------------------------
 # _replan — planner picks best goal and action, executes if different
@@ -172,7 +166,8 @@ func _execute_action(action: Dictionary) -> void:
 			search_component.stop()
 			world_state.set_state("patrolling", false)
 			world_state.set_state("at_home",    false)
-			_move_to(home_position)
+			move_component.destination_reached.connect(_on_arrived_home, CONNECT_ONE_SHOT)
+			move_component.set_target(home_position)
 
 		"GoPatrol":
 			print(">>> ACTION: going on patrol")
@@ -187,16 +182,14 @@ func _execute_action(action: Dictionary) -> void:
 			if ue != null and not chase_component.active:
 				patrol_component.stop()
 				search_component.stop()
-				world_state.set_state("patrolling",  false)
-				world_state.set_state("gap_closed",  false)
-				world_state.set_state("target_lost", false)
+				world_state.set_state("patrolling",   false)
+				world_state.set_state("gap_closed",   false)
+				world_state.set_state("target_lost",  false)
 				world_state.set_state("target_found", true)
 				chase_component.start_chase(ue)
 
 		"Attack":
 			print(">>> ACTION: attacking UE — attack loop running in _process")
-			# Attack loop is handled in _process when state == "attacking"
-			# Nothing to start here — it runs automatically
 
 		"Search":
 			print(">>> ACTION: searching for lost target")
@@ -255,8 +248,6 @@ func _on_alert_exited(body: Node2D) -> void:
 # -----------------------------------------------------------------------------
 
 func _on_attack_landed(target: Node) -> void:
-	# Guard is the orchestrator — it knows about both attack and health
-	# Components stay blind to each other
 	var health = target.get_node_or_null("HealthComponent")
 	if health == null:
 		return
@@ -264,26 +255,23 @@ func _on_attack_landed(target: Node) -> void:
 	urge.on_hit_landed()
 	print(">>> AGENT: dealt %.1f damage to UE" % damage)
 
-func _on_destination_reached() -> void:
-	if _current_goal_name == "BeHome":
-		print(">>> ARRIVED HOME")
-		world_state.set_state("at_home",      true)
-		world_state.set_state("patrolling",   false)
-		world_state.set_state("gap_closed",   false)
-		world_state.set_state("target_lost",  false)
-		world_state.set_state("target_found", true)
-		search_component.stop()
-		move_component.stop()
-	elif _current_goal_name == "FindLostTarget":
-		search_component.arrived()
-	elif world_state.get_state("patrolling"):
-		patrol_component.arrived()
+func _on_arrived_home() -> void:
+	print(">>> ARRIVED HOME")
+	world_state.set_state("at_home",      true)
+	world_state.set_state("patrolling",   false)
+	world_state.set_state("gap_closed",   false)
+	world_state.set_state("target_lost",  false)
+	world_state.set_state("target_found", true)
+	search_component.stop()
+	move_component.stop()
 
 func _on_new_patrol_target(position: Vector2) -> void:
-	_move_to(position)
+	move_component.destination_reached.connect(patrol_component.arrived, CONNECT_ONE_SHOT)
+	move_component.set_target(position)
 
 func _on_search_move_to(position: Vector2) -> void:
-	_move_to(position)
+	move_component.destination_reached.connect(search_component.arrived, CONNECT_ONE_SHOT)
+	move_component.set_target(position)
 
 func _on_search_finished() -> void:
 	print(">>> SEARCH FINISHED — target not found, resuming normal life")
@@ -303,7 +291,6 @@ func _on_spotted_ue(ue_body: Node2D) -> void:
 	world_state.set_state("target_lost",  false)
 	world_state.set_state("target_found", true)
 
-	# Wire UE death signal the moment we spot them
 	var health = ue_body.get_node_or_null("HealthComponent")
 	if health != null:
 		health.died.connect(_on_ue_died)
