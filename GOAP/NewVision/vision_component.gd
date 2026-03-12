@@ -15,15 +15,16 @@ signal lost_ue()
 signal alert_range(body)      # meter filling, target visible at distance
 signal danger_range(body)     # confirmed sighting within danger distance
 signal range_lost(body)       # target gone — clear all zone states
+signal gap_closed_signal()    # ← NEW: strike distance reached, trigger attack
 
 const RAY_COUNT:        int   = 5
 const RAY_LENGTH:       float = 200.0
 const LOST_TIMER_MAX:   float = 0.5
-const MIN_DISTANCE:     float = 30.0
+const MIN_DISTANCE:     float = 20.0
 
 const ALERT_DISTANCE:   float = 150.0   # ~9 tiles — meter filling
 const DANGER_DISTANCE:  float = 100.0   # ~6 tiles — confirmed, trigger chase
-const STRIKE_DISTANCE:  float = 30.0    # ~1 tiles — gap closed, attack
+const STRIKE_DISTANCE:  float = 40.0    # ~2 tiles — gap closed, attack
 
 # sweep
 const SWEEP_ANGLE:      float = 25.0
@@ -185,10 +186,11 @@ func _cast_rays(delta: float) -> void:
 			print(">>> VISION: danger range entered")
 			danger_range.emit(_last_seen_body)
 
-		# --- gap closed — attack range
+		# --- gap closed — attack range  ← THE FIX: now emits signal
 		if _was_seeing_ue and dist <= STRIKE_DISTANCE and not _gap_closed:
 			_gap_closed = true
 			print(">>> VISION: gap closed — strike distance reached")
+			gap_closed_signal.emit()    # ← THIS LINE WAS MISSING
 
 	else:
 		_detection_value = max(0.0, _detection_value - DRAIN_RATE * delta)
