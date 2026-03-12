@@ -6,25 +6,32 @@ extends Node2D
 # When idle, plays a look-around sequence before settling.
 # Facing is a Vector2 — no hardwired strings.
 # Detection meter fills on evidence, drains on nothing — no flicker.
-# Now owns gap_closed — vision measures distance, vision reports contact.
+# Emits zone-equivalent signals so GuardAgent reacts exactly as it did
+# with physical zones — vision drives them now instead of colliders.
 # -----------------------------------------------------------------------------
 signal spotted_ue(body)
-signal gap_closed()
 signal lost_ue()
 
-const RAY_COUNT:       int   = 5
-const RAY_LENGTH:      float = 200.0
-const LOST_TIMER_MAX:  float = 0.5
-const MIN_DISTANCE:    float = 30.0
-const STRIKE_DISTANCE: float = 50.0   # close enough — gap is closed
+signal alert_range(body)      # meter filling, target visible at distance
+signal danger_range(body)     # confirmed sighting within danger distance
+signal range_lost(body)       # target gone — clear all zone states
+
+const RAY_COUNT:        int   = 5
+const RAY_LENGTH:       float = 200.0
+const LOST_TIMER_MAX:   float = 0.5
+const MIN_DISTANCE:     float = 30.0
+
+const ALERT_DISTANCE:   float = 150.0   # ~9 tiles — meter filling
+const DANGER_DISTANCE:  float = 100.0   # ~6 tiles — confirmed, trigger chase
+const STRIKE_DISTANCE:  float = 50.0    # ~3 tiles — gap closed, attack
 
 # sweep
-const SWEEP_ANGLE:     float = 25.0
-const SWEEP_SPEED:     float = 60.0
+const SWEEP_ANGLE:      float = 25.0
+const SWEEP_SPEED:      float = 60.0
 
 # look-around sequence when idle
-const LOOK_ANGLES:     Array = [-40.0, 0.0, 40.0, 0.0]
-const LOOK_STEP_TIME:  float = 0.8
+const LOOK_ANGLES:      Array = [-40.0, 0.0, 40.0, 0.0]
+const LOOK_STEP_TIME:   float = 0.8
 
 # detection meter rates
 const FILL_RATE_CENTER: float = 2.5
@@ -50,12 +57,16 @@ var _looking_around: bool   = false
 var _gaze_target_angle: float = 0.0
 var _homing:            bool  = false
 
-# detection meter — fills with evidence, fires when full
+# detection meter
 var _detection_value:     float = 0.0
 var _detection_confirmed: bool  = false
 
-# gap tracking — only emit once per contact
+# gap tracking
 var _gap_closed:          bool  = false
+
+# zone state tracking — prevent signal spam
+var _in_alert_range:      bool  = false
+var _in_danger_range:     bool  = false
 
 @export var body: CharacterBody2D
 
@@ -115,12 +126,12 @@ func _update_sweep(delta: float) -> void:
 		_sweep_dir   = 1.0
 
 # -----------------------------------------------------------------------------
-# _cast_rays — feeds detection meter based on hits
+# _cast_rays — feeds detection meter, drives zone-equivalent signals
 # -----------------------------------------------------------------------------
 func _cast_rays(delta: float) -> void:
-	var hits:        int    = 0
-	var hit_angle:   float  = 0.0
-	var half_spread: float  = 10.0
+	var hits:        int   = 0
+	var hit_angle:   float = 0.0
+	var half_spread: float = 10.0
 
 	if _last_seen_body != null:
 		var dist = body.global_position.distance_to(_last_seen_body.global_position)
@@ -144,38 +155,47 @@ func _cast_rays(delta: float) -> void:
 				_last_seen_body = result.collider
 
 	if hits > 0:
-		# home gaze toward target
 		_homing            = true
 		_gaze_target_angle = _sweep_angle + hit_angle
 
-		# fill meter — more rays = faster fill
 		var fill_rate = lerp(FILL_RATE_EDGE, FILL_RATE_CENTER, float(hits) / float(RAY_COUNT))
 		_detection_value = min(1.0, _detection_value + fill_rate * delta)
 
-		# meter full — confirm sighting
+		var dist = body.global_position.distance_to(_last_seen_body.global_position)
+
+		# --- alert range — meter filling, target visible at distance
+		if _detection_value > 0.0 and dist <= ALERT_DISTANCE and not _in_alert_range:
+			_in_alert_range = true
+			print(">>> VISION: alert range entered")
+			alert_range.emit(_last_seen_body)
+
+		# --- confirmed sighting
 		if _detection_value >= 1.0 and not _detection_confirmed:
 			_detection_confirmed = true
 			_was_seeing_ue       = true
 			_lost_timer          = 0.0
 			spotted_ue.emit(_last_seen_body)
 
-		# confirmed sighting — check gap
-		if _detection_confirmed and _last_seen_body != null:
+		if _was_seeing_ue:
 			_lost_timer = 0.0
-			var dist = body.global_position.distance_to(_last_seen_body.global_position)
-			if dist <= STRIKE_DISTANCE and not _gap_closed:
-				_gap_closed = true
-				print(">>> VISION: gap closed — strike distance reached")
-				gap_closed.emit()
+
+		# --- danger range — confirmed and close enough to trigger chase
+		if _detection_confirmed and dist <= DANGER_DISTANCE and not _in_danger_range:
+			_in_danger_range = true
+			print(">>> VISION: danger range entered")
+			danger_range.emit(_last_seen_body)
+
+		# --- gap closed — attack range
+		if _detection_confirmed and dist <= STRIKE_DISTANCE and not _gap_closed:
+			_gap_closed = true
+			print(">>> VISION: gap closed — strike distance reached")
 
 	else:
-		# nothing seen — drain meter
 		_detection_value = max(0.0, _detection_value - DRAIN_RATE * delta)
 
 		if _detection_value <= 0.0 and not _was_seeing_ue:
 			_homing = false
 
-		# confirmed sighting fading out
 		if _was_seeing_ue:
 			_lost_timer -= delta
 			if _lost_timer <= -LOST_TIMER_MAX:
@@ -183,10 +203,21 @@ func _cast_rays(delta: float) -> void:
 				_detection_confirmed = false
 				_detection_value     = 0.0
 				_lost_timer          = 0.0
-				_last_seen_body      = null
-				_homing              = false
 				_gap_closed          = false
+
+				# fire range_lost once to clear all zone states in GuardAgent
+				if _in_alert_range or _in_danger_range:
+					_in_alert_range  = false
+					_in_danger_range = false
+					print(">>> VISION: range lost")
+					range_lost.emit(_last_seen_body)
+
+				_last_seen_body = null
+				_homing         = false
 				lost_ue.emit()
+
+func is_gap_closed() -> bool:
+	return _gap_closed
 
 func clear_target() -> void:
 	_was_seeing_ue       = false
@@ -196,3 +227,5 @@ func clear_target() -> void:
 	_last_seen_body      = null
 	_homing              = false
 	_gap_closed          = false
+	_in_alert_range      = false
+	_in_danger_range     = false
