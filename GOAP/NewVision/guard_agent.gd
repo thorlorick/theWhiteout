@@ -4,6 +4,7 @@ extends CharacterBody2D
 # GuardAgent
 # Lean orchestrator. Owns the components, wires signals, runs the loop.
 # Makes no decisions of its own — that's the planner's job.
+# Zone-equivalent signals now come from VisionComponent, not colliders.
 # -----------------------------------------------------------------------------
 var urge        := UrgeComponent.new()
 var planner     := PlannerComponent.new()
@@ -25,9 +26,12 @@ var attack      := AttackComponent.new()
 
 @export var damage: float = 10.0
 
-var _current_goal_name:   String  = "Patrol"
-var _last_known_position: Vector2 = Vector2.ZERO
+var _current_goal_name:    String  = "Patrol"
+var _last_known_position:  Vector2 = Vector2.ZERO
 var _last_known_direction: Vector2 = Vector2.ZERO
+
+var _in_danger_range: bool = false
+var _in_alert_range:  bool = false
 
 # -----------------------------------------------------------------------------
 # _ready — wire everything up, guard starts patrolling
@@ -47,17 +51,26 @@ func _ready() -> void:
 	move_component.velocity_changed.connect(animation.update)
 	move_component.velocity_changed.connect(vision_component.update_direction)
 
+	# vision — confirmed sighting signals
 	vision_component.spotted_ue.connect(_on_spotted_ue)
 	vision_component.lost_ue.connect(_on_lost_ue)
-	vision_component.gap_closed.connect(_on_gap_closed)
 
+	# vision — zone-equivalent signals replace ZoneComponent
+	vision_component.alert_range.connect(_on_alert_entered)
+	vision_component.danger_range.connect(_on_danger_entered)
+	vision_component.range_lost.connect(_on_range_lost)
+
+	# chase
 	chase_component.move_to.connect(_on_chase_move_to)
 	chase_component.ue_lost.connect(_on_ue_lost)
 
+	# attack
 	attack.attack_landed.connect(_on_attack_landed)
 
+	# patrol
 	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
 
+	# search
 	search_component.search_move_to.connect(_on_search_move_to)
 	search_component.search_finished.connect(_on_search_finished)
 
@@ -75,10 +88,13 @@ func _ready() -> void:
 	patrol_component.start()
 
 # -----------------------------------------------------------------------------
-# _process — urges tick, priorities update, planner runs every frame
+# _process — urges tick, priorities update, planner runs, attack loop
 # -----------------------------------------------------------------------------
 func _process(delta: float) -> void:
 	var guard_state: String = _get_guard_state()
+
+	if _in_alert_range:
+		urge.on_alert_tick(delta)
 
 	urge.tick(delta, guard_state)
 
@@ -89,11 +105,16 @@ func _process(delta: float) -> void:
 		urge.get_aggression_urge()
 	)
 
+	# attack loop — runs in process while gap is closed
 	if guard_state == "attacking":
 		var ue = world_state.get_state("ue_target")
 		if ue != null:
 			attack.tick(delta)
 			attack.try_attack(ue)
+
+	# gap closed check — vision owns the measurement, agent reacts
+	if vision_component.is_gap_closed() and not world_state.get_state("gap_closed"):
+		_on_gap_closed()
 
 	_replan()
 
@@ -107,6 +128,27 @@ func _clear_pending_arrivals() -> void:
 		move_component.destination_reached.disconnect(search_component.arrived)
 	if move_component.destination_reached.is_connected(_on_arrived_home):
 		move_component.destination_reached.disconnect(_on_arrived_home)
+
+# -----------------------------------------------------------------------------
+# _trigger_chase — danger range entered, bypass planner and chase immediately
+# -----------------------------------------------------------------------------
+func _trigger_chase() -> void:
+	var ue = world_state.get_state("ue_target")
+	if ue == null:
+		print(">>> DANGER RANGE — no target acquired")
+		return
+	if chase_component.active:
+		return
+	print(">>> DANGER RANGE — triggering chase directly")
+	_clear_pending_arrivals()
+	patrol_component.stop()
+	search_component.stop()
+	world_state.set_state("patrolling",   false)
+	world_state.set_state("gap_closed",   false)
+	world_state.set_state("target_lost",  false)
+	world_state.set_state("target_found", true)
+	_current_goal_name = "Chase"
+	chase_component.start_chase(ue)
 
 # -----------------------------------------------------------------------------
 # _replan
@@ -193,6 +235,25 @@ func _get_guard_state() -> String:
 	return "patrolling"
 
 # -----------------------------------------------------------------------------
+# VISION ZONE-EQUIVALENT HANDLERS
+# -----------------------------------------------------------------------------
+
+func _on_alert_entered(body: Node2D) -> void:
+	print(">>> VISION: alert range — pressure building")
+	_in_alert_range = true
+	urge.on_danger_entered()
+
+func _on_danger_entered(body: Node2D) -> void:
+	print(">>> VISION: danger range — triggering chase")
+	_in_danger_range = true
+	_trigger_chase()
+
+func _on_range_lost(body: Node2D) -> void:
+	print(">>> VISION: range lost — clearing zone states")
+	_in_alert_range  = false
+	_in_danger_range = false
+
+# -----------------------------------------------------------------------------
 # SIGNAL HANDLERS
 # -----------------------------------------------------------------------------
 
@@ -251,8 +312,10 @@ func _on_lost_ue() -> void:
 	_last_known_position  = ue.global_position if ue != null else home_position
 	_last_known_direction = (ue.global_position - global_position).normalized() if ue != null else Vector2.ZERO
 	world_state.set_state("sees_ue",      false)
+	world_state.set_state("gap_closed",   false)
 	world_state.set_state("target_lost",  true)
 	world_state.set_state("target_found", false)
+	chase_component.stop_chase()
 	urge.on_ue_lost()
 
 func _on_gap_closed() -> void:
@@ -272,6 +335,8 @@ func _on_ue_died() -> void:
 	world_state.set_state("target_lost",   false)
 	world_state.set_state("target_found",  true)
 	world_state.set_state("ue_eliminated", true)
+	_in_alert_range  = false
+	_in_danger_range = false
 	vision_component.clear_target()
 	chase_component.stop_chase()
 	move_component.stop()
