@@ -112,6 +112,18 @@ func _process(delta: float) -> void:
 	_replan()
 
 # -----------------------------------------------------------------------------
+# _clear_pending_arrivals — disconnect any arrival callbacks still waiting
+# called whenever the guard's journey is interrupted
+# -----------------------------------------------------------------------------
+func _clear_pending_arrivals() -> void:
+	if move_component.destination_reached.is_connected(patrol_component.arrived):
+		move_component.destination_reached.disconnect(patrol_component.arrived)
+	if move_component.destination_reached.is_connected(search_component.arrived):
+		move_component.destination_reached.disconnect(search_component.arrived)
+	if move_component.destination_reached.is_connected(_on_arrived_home):
+		move_component.destination_reached.disconnect(_on_arrived_home)
+
+# -----------------------------------------------------------------------------
 # _trigger_chase — danger zone entered, bypass planner and chase immediately
 # -----------------------------------------------------------------------------
 func _trigger_chase() -> void:
@@ -122,6 +134,7 @@ func _trigger_chase() -> void:
 	if chase_component.active:
 		return
 	print(">>> DANGER ZONE — triggering chase directly")
+	_clear_pending_arrivals()
 	patrol_component.stop()
 	search_component.stop()
 	world_state.set_state("patrolling",   false)
@@ -158,6 +171,8 @@ func _replan() -> void:
 # _execute_action — tells guard what to do, updates world state
 # -----------------------------------------------------------------------------
 func _execute_action(action: Dictionary) -> void:
+	_clear_pending_arrivals()
+
 	match action["name"]:
 
 		"GoHome":
@@ -282,6 +297,7 @@ func _on_spotted_ue(ue_body: Node2D) -> void:
 	if world_state.get_state("sees_ue"):
 		return
 	print(">>> UE SPOTTED")
+	_clear_pending_arrivals()
 	patrol_component.stop()
 	search_component.stop()
 	urge.on_ue_spotted()
@@ -312,6 +328,7 @@ func _on_gap_closed() -> void:
 
 func _on_ue_died() -> void:
 	print(">>> UE DIED — cleaning up")
+	_clear_pending_arrivals()
 	var ue = world_state.get_state("ue_target")
 	if ue != null:
 		ue.queue_free()
