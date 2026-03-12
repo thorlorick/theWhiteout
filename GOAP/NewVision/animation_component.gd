@@ -14,12 +14,12 @@ func setup(player: AnimationPlayer) -> void:
 func update(direction: Vector2, is_moving: bool) -> void:
 	if direction != Vector2.ZERO:
 		current_direction = direction
-	var anim_name = ("walk_" if is_moving else "idle_") + _to_string(current_direction)
+	var anim_name = ("walk_" if is_moving else "idle_") + _direction_to_string(current_direction)
 	if anim_name != current_animation:
 		current_animation = anim_name
 		animation_player.play(anim_name)
 
-func _to_string(dir: Vector2) -> String:
+func _direction_to_string(dir: Vector2) -> String:
 	if dir == Vector2.ZERO:
 		return "down"
 	if abs(dir.x) > abs(dir.y):
