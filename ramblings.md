@@ -23,3 +23,6 @@ We've discoverd GOAP -- Goal Oriented Action Plannning -- AI for the video games
 
 # March 7, 2026
 GOAP is the GOAT!!!! jokes aside...it's truly awesome. I now have a fully animated goblin guard walking around a region constantly struggling with whether to patrol or go home...it's really cool. Now we have to add some more behaviours...this is so much fun!!!!
+
+# March 12, 2026
+GOAP has lived up to the hype. I have gone hardcore component mode, strict rule adherence with no "minor violations". I have a standard guard that seems to fight different urges in order to decide what to do. Next, we are going to try to figure out costs and how to use them for personality tuning. Wish me luck.
