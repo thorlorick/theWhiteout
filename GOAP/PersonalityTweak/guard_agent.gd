@@ -39,6 +39,7 @@ var _in_alert_range:  bool = false
 func _ready() -> void:
 	if personality != null:
 		actions.apply_personality(personality)
+		urge.apply_personality(personality)
 
 	add_child(attack)
 
