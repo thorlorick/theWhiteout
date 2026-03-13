@@ -6,6 +6,14 @@ const RUNE_SCENE = preload("res://scenes/rune.tscn")
 @export var runes: Array[RuneData] = []
 @export var weights: Array[int] = []
 
+func _ready() -> void:
+    # Find the HealthComponent sibling and listen for death
+    var health = get_parent().get_node("HealthComponent")
+    health.died.connect(_on_died)
+
+func _on_died() -> void:
+    drop(get_parent().global_position)
+
 func drop(spawn_position: Vector2) -> void:
     if runes.is_empty():
         return
