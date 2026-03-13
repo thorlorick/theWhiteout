@@ -4,7 +4,8 @@ class_name UrgeComponent
 # Four independent drives that build and decay on their own schedules.
 # Comfort, duty, curiosity, and aggression.
 # This component only measures. It never decides. The planner decides.
-# Rates and spikes come from PersonalityResource — no hardcoded values.
+# Rates and spikes are calculated from PersonalityResource.
+# If no personality is assigned, standard guard fallback values are used.
 # -----------------------------------------------------------------------------
 var comfort_urge:    float = 0.0
 var duty_urge:       float = 0.5
@@ -13,24 +14,23 @@ var aggression_urge: float = 0.0
 
 var _print_timer: float = 0.0
 
-# rates — set by apply_personality, not hardcoded
-var aggression_build_rate:  float = 0.05
-var aggression_decay_rate:  float = 0.08
-var aggression_spike:       float = 0.8
+# rates — calculated from personality, fallback = standard guard (5/10)
+var aggression_build_rate:  float = 0.10
+var aggression_decay_rate:  float = 0.06
+var aggression_spike:       float = 0.7
+var hit_landed_bonus:       float = 0.15
 
-var curiosity_build_rate:   float = 0.0
+var curiosity_build_rate:   float = 0.02
 var curiosity_decay_rate:   float = 0.05
-var curiosity_spike:        float = 0.8
+var curiosity_spike:        float = 0.6
 
-var comfort_build_rate:     float = 0.02
+var comfort_build_rate:     float = 0.03
 var comfort_decay_rate:     float = 0.03
 
-var duty_build_rate:        float = 0.02
-var duty_decay_rate:        float = 0.02
+var duty_build_rate:        float = 0.03
+var duty_decay_rate:        float = 0.03
 
 var alert_zone_boost:       float = 0.003
-var danger_zone_boost:      float = 0.25
-var hit_landed_bonus:       float = 0.1
 
 const COMFORT_URGE_REST:    float = 0.05
 const DUTY_URGE_REST:       float = 0.05
@@ -39,21 +39,28 @@ const AGGRESSION_URGE_REST: float = 0.0
 
 # -----------------------------------------------------------------------------
 # apply_personality — called once by GuardAgent in _ready()
+# translates 0-10 scores into internal rates via lerp
 # -----------------------------------------------------------------------------
 func apply_personality(p: PersonalityResource) -> void:
-	aggression_build_rate = p.aggression_build_rate
-	aggression_decay_rate = p.aggression_decay_rate
-	aggression_spike      = p.aggression_spike
-	curiosity_build_rate  = p.curiosity_build_rate
-	curiosity_decay_rate  = p.curiosity_decay_rate
-	curiosity_spike       = p.curiosity_spike
-	comfort_build_rate    = p.comfort_build_rate
-	comfort_decay_rate    = p.comfort_decay_rate
-	duty_build_rate       = p.duty_build_rate
-	duty_decay_rate       = p.duty_decay_rate
-	alert_zone_boost      = p.alert_zone_boost
-	danger_zone_boost     = p.danger_zone_boost
-	hit_landed_bonus      = p.hit_landed_bonus
+	var a  = p.aggression / 10.0
+	var c  = p.comfort    / 10.0
+	var d  = p.duty       / 10.0
+	var cu = p.curiosity  / 10.0
+
+	aggression_build_rate = lerp(0.01, 0.20, a)
+	aggression_decay_rate = lerp(0.12, 0.01, a)
+	aggression_spike      = lerp(0.4,  1.0,  a)
+	hit_landed_bonus      = lerp(0.05, 0.25, a)
+
+	comfort_build_rate    = lerp(0.01, 0.05, c)
+	comfort_decay_rate    = lerp(0.05, 0.01, c)
+
+	duty_build_rate       = lerp(0.01, 0.05, d)
+	duty_decay_rate       = lerp(0.05, 0.01, d)
+
+	curiosity_build_rate  = lerp(0.0,  0.05, cu)
+	curiosity_decay_rate  = lerp(0.08, 0.02, cu)
+	curiosity_spike       = lerp(0.2,  1.0,  cu)
 
 # -----------------------------------------------------------------------------
 # tick — called every frame by GuardAgent
