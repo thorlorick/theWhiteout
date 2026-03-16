@@ -26,3 +26,7 @@ GOAP is the GOAT!!!! jokes aside...it's truly awesome. I now have a fully animat
 
 # March 12, 2026
 GOAP has lived up to the hype. I have gone hardcore component mode, strict rule adherence with no "minor violations". I have a standard guard that seems to fight different urges in order to decide what to do. Next, we are going to try to figure out costs and how to use them for personality tuning. Wish me luck.
+
+# March 16, 2026
+I'm starting to get a handle on some basics but there's still a ton I don't understand. 
+how am I going I make combat fun with only 1 animation??
