@@ -30,3 +30,6 @@ GOAP has lived up to the hype. I have gone hardcore component mode, strict rule 
 # March 16, 2026
 I'm starting to get a handle on some basics but there's still a ton I don't understand. 
 how am I going I make combat fun with only 1 animation??
+
+# March 17, 2026
+I thought I had a really nice spritesheet maker, but it didn't work so well. I still see some possibilities with it, but the sheets don't translate very well to the animation player..LPC, if you are listening..your site is awesome, but I need help!!! Other than that. I'm going to start to build with the sprite sheets I have and try to muck about with LPC when I get the time. 
