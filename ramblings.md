@@ -33,3 +33,7 @@ how am I going I make combat fun with only 1 animation??
 
 # March 17, 2026
 I thought I had a really nice spritesheet maker, but it didn't work so well. I still see some possibilities with it, but the sheets don't translate very well to the animation player..LPC, if you are listening..your site is awesome, but I need help!!! Other than that. I'm going to start to build with the sprite sheets I have and try to muck about with LPC when I get the time. 
+
+# March 21, 2026
+I just started the animation tree portion of the enemy design (i actually thought I might start building a level...ahhahahahah) and it completely changed everything about everything. I'm still a fanatical componentist...compositonalists...??? i still love components, but i've come to believe that there has to be a middle ground...i mean, jesus, why shouldn't movement know about speed...it's moving for god's sake. Anyways, as you can probably tell from my frustration, i'm at a crucial moment here. BUT, the urge system is holding and I'm going to keep using that system to "replan" whenever there is a need to do so.
+So much still to learn and do...the good news, I'm still completely loving it!!!!
