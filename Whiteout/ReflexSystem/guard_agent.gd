@@ -52,7 +52,6 @@ func _ready() -> void:
 	_connect_signals()
 	_connect_reflex_signals()
 	_setup_animation()
-	_setup_world_state()
 
 	patrol_component.start()
 
@@ -102,18 +101,6 @@ func _connect_reflex_signals() -> void:
 func _setup_animation() -> void:
 	var anim_tree = $EnemyAnimations/AnimationTree
 	animation.setup(anim_tree)
-
-# -----------------------------------------------------------------------------
-# _setup_world_state
-# -----------------------------------------------------------------------------
-func _setup_world_state() -> void:
-	world_state.set_state("patrolling",    true)
-	world_state.set_state("at_home",       false)
-	world_state.set_state("sees_ue",       false)
-	world_state.set_state("gap_closed",    false)
-	world_state.set_state("target_lost",   false)
-	world_state.set_state("target_found",  true)
-	world_state.set_state("ue_eliminated", false)
 
 # -----------------------------------------------------------------------------
 # _process
