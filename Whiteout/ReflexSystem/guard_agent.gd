@@ -272,5 +272,3 @@ func _clear_pending_arrivals() -> void:
 		ai_move_component.destination_reached.disconnect(patrol_component.arrived)
 	if ai_move_component.destination_reached.is_connected(search_component.arrived):
 		ai_move_component.destination_reached.disconnect(search_component.arrived)
-	if ai_move_component.destination_reached.is_connected(_on_arrived_home):
-		ai_move_component.destination_reached.disconnect(_on_arrived_home)
