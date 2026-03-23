@@ -9,7 +9,7 @@ var actions: Array = [
 		"name":          "GoHome",
 		"cost":          1.0,
 		"preconditions": {"at_home": false},
-		"effects":       {"at_home": true, "patrolling": false}
+		"effects":       {"at_home": true}
 	},
 	{
 		"name":          "GoPatrol",
@@ -32,7 +32,7 @@ var actions: Array = [
 	{
 		"name":          "Search",
 		"cost":          1.0,
-		"preconditions": {"target_lost": true, "target_found": false},
-		"effects":       {"target_found": true}
+		"preconditions": {"target_lost": true},
+		"effects":       {"target_lost": false}
 	},
 ]
