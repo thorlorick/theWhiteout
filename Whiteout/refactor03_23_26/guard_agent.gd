@@ -122,7 +122,7 @@ func _execute_action(action: Dictionary) -> void:
         "GoPatrol":
             print(">>> ACTION: going on patrol")
             patrol_component.start()
-        "Chase_Target":
+        "ChaseTarget":
             print(">>> ACTION: chasing TARGET")
             var target = world_state.get_state("known_target")
             if target != null and not chase_component.active:
