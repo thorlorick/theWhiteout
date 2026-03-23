@@ -109,6 +109,36 @@ func _setup_animation() -> void:
 	animation.setup(anim_tree)
 
 # -----------------------------------------------------------------------------
+# execute action
+# -----------------------------------------------------------------------------
+func _execute_action(action: Dictionary) -> void:
+    _clear_pending_arrivals()
+    match action["name"]:
+        "GoHome":
+            print(">>> ACTION: going home")
+            patrol_component.stop()
+            search_component.stop()
+            ai_move_component.destination_reached.connect(_on_arrived_home, CONNECT_ONE_SHOT)
+            ai_move_component.set_target(home_position)
+        "GoPatrol":
+            print(">>> ACTION: going on patrol")
+            patrol_component.start()
+        "ChaseUE":
+            print(">>> ACTION: chasing UE")
+            var ue = world_state.get_state("ue_target")
+            if ue != null and not chase_component.active:
+                patrol_component.stop()
+                search_component.stop()
+                chase_component.start_chase(ue)
+        "Attack":
+            print(">>> ACTION: attacking UE")
+        "Search":
+            print(">>> ACTION: searching for lost target")
+            patrol_component.stop()
+            search_component.start_search(_last_known_position, _last_known_direction)
+
+
+# -----------------------------------------------------------------------------
 # PROCESS (NO DECISIONS HERE)
 # -----------------------------------------------------------------------------
 func _process(delta: float) -> void:
@@ -144,24 +174,19 @@ func _get_guard_state() -> String:
 # REPLAN → EMITS INTENT ONLY
 # -----------------------------------------------------------------------------
 func _replan() -> void:
-	var best_goal = planner.get_best_goal(goals.goals, _current_goal_name)
-
-	if planner.is_goal_satisfied(best_goal, world_state):
-		return
-
-	var best_action = planner.get_best_action(best_goal, actions.actions, world_state)
-	if best_action.is_empty():
-		return
-
-	if best_goal["name"] != _current_goal_name:
-		_current_goal_name = best_goal["name"]
-
-		print(">>> REPLAN — goal: %s | action: %s" % [
-			best_goal["name"],
-			best_action["name"]
-		])
-
-		emit_signal("action_started", best_action["name"])
+    var best_goal = planner.get_best_goal(goals.goals, _current_goal_name)
+    if planner.is_goal_satisfied(best_goal, world_state):
+        return
+    var best_action = planner.get_best_action(best_goal, actions.actions, world_state)
+    if best_action.is_empty():
+        return
+    if best_goal["name"] != _current_goal_name:
+        _current_goal_name = best_goal["name"]
+        print(">>> REPLAN — goal: %s | action: %s" % [
+            best_goal["name"],
+            best_action["name"]
+        ])
+        _execute_action(best_action)
 
 # -----------------------------------------------------------------------------
 # EVENTS → SIGNAL HUB
