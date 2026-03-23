@@ -17,16 +17,17 @@ var animation   := EnemyAnimationComponent.new()
 var attack      := AttackComponent.new()
 var reflex      := ReflexComponent.new()
 
-@export var ai_move_component: AIMoveComponent
-@export var vision_component:  VisionComponent
-@export var chase_component:   ChaseComponent
-@export var patrol_component:  PatrolComponent
-@export var search_component:  SearchComponent
-@export var health_component:  HealthComponent
-@export var nav_region:        NavigationRegion2D
-@export var home_position:     Vector2
-@export var personality:       PersonalityResource
-@export var damage:            float = 10.0
+@export var ai_move_component:  AIMoveComponent
+@export var vision_component:   VisionComponent
+@export var chase_component:    ChaseComponent
+@export var patrol_component:   PatrolComponent
+@export var search_component:   SearchComponent
+@export var health_component:   HealthComponent
+@export var hitbox_component:   HitboxComponent
+@export var hurtbox_component:  HurtboxComponent
+@export var nav_region:         NavigationRegion2D
+@export var home_position:      Vector2
+@export var personality:        PersonalityResource
 
 var _current_goal_name:    String  = "Patrol"
 var _last_known_position:  Vector2 = Vector2.ZERO
@@ -40,6 +41,7 @@ var _in_danger_range:      bool    = false
 func _ready() -> void:
 	if personality != null:
 		urge.apply_personality(personality)
+		attack.personality = personality
 
 	add_child(attack)
 
@@ -61,8 +63,9 @@ func _ready() -> void:
 func _connect_signals() -> void:
 	ai_move_component.velocity_changed.connect(animation.update)
 	ai_move_component.velocity_changed.connect(vision_component.update_direction)
+	ai_move_component.velocity_changed.connect(_on_velocity_changed)
 
-	health_component.hit.connect(_on_hit)
+	health_component.hit.connect(_on_hit_received)
 	health_component.died.connect(_on_died)
 
 	vision_component.spotted_ue.connect(_on_spotted_ue)
@@ -75,7 +78,10 @@ func _connect_signals() -> void:
 	chase_component.move_to.connect(_on_chase_move_to)
 	chase_component.ue_lost.connect(_on_ue_lost)
 
-	attack.attack_landed.connect(_on_attack_landed)
+	attack.attack_triggered.connect(_on_attack_triggered)
+	attack.attack_finished.connect(_on_attack_finished)
+
+	hurtbox_component.hurt.connect(_on_hurtbox_hurt)
 
 	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
 
@@ -94,6 +100,9 @@ func _connect_reflex_signals() -> void:
 	reflex.interrupt_movement_stopped.connect(_on_reflex_movement_stopped)
 	reflex.interrupt_speed_reset.connect(_on_reflex_speed_reset)
 	reflex.interrupt_run_started.connect(_on_reflex_run_started)
+	reflex.interrupt_attack_stopped.connect(_on_reflex_attack_stopped)
+	reflex.interrupt_hurt_started.connect(_on_reflex_hurt_started)
+	reflex.interrupt_death_started.connect(_on_reflex_death_started)
 
 # -----------------------------------------------------------------------------
 # _setup_animation
@@ -121,11 +130,8 @@ func _process(delta: float) -> void:
 	)
 
 	if guard_state == "attacking":
-		var ue = world_state.get_state("ue_target")
-		if ue != null:
-			attack.tick(delta)
-			attack.try_attack(ue)
-			animation.play_attack(false)
+		if attack.can_attack():
+			attack.try_attack()
 
 	_replan()
 
@@ -256,6 +262,27 @@ func _on_reflex_run_started() -> void:
 	ai_move_component.set_speed(speed.get_run_speed())
 	ai_move_component.set_running(true)
 
+func _on_reflex_attack_stopped() -> void:
+	hitbox_component.deactivate()
+
+func _on_reflex_hurt_started() -> void:
+	hurtbox_component.set_invulnerable(true)
+	animation.play_hurt()
+
+func _on_reflex_death_started() -> void:
+	animation.play_death()
+	ai_move_component.stop()
+	set_physics_process(false)
+	set_process(false)
+
+# -----------------------------------------------------------------------------
+# VELOCITY HANDLER
+# keeps attack component in sync with movement state
+# -----------------------------------------------------------------------------
+
+func _on_velocity_changed(_direction: Vector2, _is_moving: bool, is_running: bool) -> void:
+	attack.set_running(is_running)
+
 # -----------------------------------------------------------------------------
 # VISION HANDLERS
 # -----------------------------------------------------------------------------
@@ -307,35 +334,45 @@ func _on_gap_closed() -> void:
 	urge.on_gap_closed()
 
 # -----------------------------------------------------------------------------
+# ATTACK HANDLERS
+# -----------------------------------------------------------------------------
+
+func _on_attack_triggered(damage_info: DamageInfo) -> void:
+	var ue = world_state.get_state("ue_target")
+	if ue == null:
+		return
+	var direction = (ue.global_position - global_position).normalized()
+	damage_info.knockback_direction = direction
+	hitbox_component.activate(damage_info)
+	animation.play_attack(attack.is_running())
+
+func _on_attack_finished() -> void:
+	urge.on_hit_landed()
+	_replan()
+
+# -----------------------------------------------------------------------------
+# HURTBOX HANDLER
+# something hit us — route through health then reflex
+# -----------------------------------------------------------------------------
+
+func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
+	health_component.take_damage(damage_info)
+
+# -----------------------------------------------------------------------------
 # HEALTH HANDLERS
 # -----------------------------------------------------------------------------
 
-func _on_hit(amount: float) -> void:
-	print(">>> GUARD: took %.1f damage" % amount)
-	animation.play_hurt()
+func _on_hit_received(damage_info: DamageInfo) -> void:
+	print(">>> GUARD: took %.1f damage" % damage_info.amount)
+	reflex.on_hit_received()
 
 func _on_died() -> void:
 	print(">>> GUARD: died")
-	animation.play_death()
-	ai_move_component.stop()
-	set_physics_process(false)
-	set_process(false)
+	reflex.on_died()
 
 # -----------------------------------------------------------------------------
 # SIGNAL HANDLERS
 # -----------------------------------------------------------------------------
-
-func _on_attack_landed(target: Node) -> void:
-	if not is_instance_valid(target):
-		return
-	if world_state.get_state("ue_eliminated"):
-		return
-	var health = target.get_node_or_null("HealthComponent")
-	if health == null or health.get_is_dead():
-		return
-	health.take_damage(damage)
-	urge.on_hit_landed()
-	print(">>> AGENT: dealt %.1f damage to UE" % damage)
 
 func _on_arrived_home() -> void:
 	print(">>> ARRIVED HOME")
@@ -374,7 +411,6 @@ func _on_ue_lost() -> void:
 func _on_ue_died() -> void:
 	print(">>> UE DIED — cleaning up")
 	_clear_pending_arrivals()
-	attack.reset()
 	var ue = world_state.get_state("ue_target")
 	if ue != null:
 		ue.queue_free()
