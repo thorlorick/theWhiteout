@@ -4,7 +4,6 @@ extends CharacterBody2D
 # -----------------------------------------------------------------------------
 # SIGNAL HUB (central decoupling point)
 # -----------------------------------------------------------------------------
-signal action_started(action_name: String)
 signal damage_received(damage_info: DamageInfo)
 signal target_spotted(target: Node2D)
 signal target_lost()
@@ -293,7 +292,9 @@ func _on_reflex_death_started() -> void:
 # CLEANUP
 # -----------------------------------------------------------------------------
 func _clear_pending_arrivals() -> void:
-	if ai_move_component.destination_reached.is_connected(patrol_component.arrived):
-		ai_move_component.destination_reached.disconnect(patrol_component.arrived)
-	if ai_move_component.destination_reached.is_connected(search_component.arrived):
-		ai_move_component.destination_reached.disconnect(search_component.arrived)
+    if ai_move_component.destination_reached.is_connected(patrol_component.arrived):
+        ai_move_component.destination_reached.disconnect(patrol_component.arrived)
+    if ai_move_component.destination_reached.is_connected(search_component.arrived):
+        ai_move_component.destination_reached.disconnect(search_component.arrived)
+    if ai_move_component.destination_reached.is_connected(_on_arrived_home):
+        ai_move_component.destination_reached.disconnect(_on_arrived_home)
