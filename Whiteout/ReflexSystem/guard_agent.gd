@@ -71,6 +71,7 @@ func _connect_signals() -> void:
 
 	health_component.hit.connect(_on_hit_received)
 	health_component.died.connect(_on_died)
+	damage_received.connect(health_component.take_damage)
 
 	vision_component.spotted_ue.connect(_on_spotted_ue)
 	vision_component.lost_ue.connect(_on_lost_ue)
