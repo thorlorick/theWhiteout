@@ -72,12 +72,12 @@ func _connect_signals() -> void:
 	health_component.died.connect(_on_died)
 	damage_received.connect(health_component.take_damage)
 
-	vision_component.spotted_ue.connect(_on_spotted_ue)
-	vision_component.lost_ue.connect(_on_lost_ue)
+	vision_component.spotted_target.connect(_on_spotted_target)
+	vision_component.lost_target.connect(_on_lost_target)
 	vision_component.gap_closed_signal.connect(_on_gap_closed)
 
 	chase_component.move_to.connect(_on_chase_move_to)
-	chase_component.ue_lost.connect(_on_ue_lost)
+	chase_component.target_lost.connect(_on_target_lost)
 
 	hurtbox_component.hurt.connect(_on_hurtbox_hurt)
 
@@ -122,15 +122,15 @@ func _execute_action(action: Dictionary) -> void:
         "GoPatrol":
             print(">>> ACTION: going on patrol")
             patrol_component.start()
-        "ChaseUE":
-            print(">>> ACTION: chasing UE")
-            var ue = world_state.get_state("ue_target")
-            if ue != null and not chase_component.active:
+        "Chase_Target":
+            print(">>> ACTION: chasing TARGET")
+            var target = world_state.get_state("known_target")
+            if target != null and not chase_component.active:
                 patrol_component.stop()
                 search_component.stop()
-                chase_component.start_chase(ue)
+                chase_component.start_chase(target)
         "Attack":
-            print(">>> ACTION: attacking UE")
+            print(">>> ACTION: attacking TARGET")
         "Search":
             print(">>> ACTION: searching for lost target")
             patrol_component.stop()
@@ -161,7 +161,7 @@ func _process(delta: float) -> void:
 # DERIVED STATE (acceptable for now)
 # -----------------------------------------------------------------------------
 func _get_guard_state() -> String:
-	if world_state.get_state("sees_ue"):
+	if world_state.get_state("sees_target"):
 		return "attacking" if world_state.get_state("gap_closed") else "chasing"
 	if world_state.get_state("target_lost"):
 		return "searching"
@@ -190,22 +190,22 @@ func _replan() -> void:
 # -----------------------------------------------------------------------------
 # EVENTS → SIGNAL HUB
 # -----------------------------------------------------------------------------
-func _on_spotted_ue(ue_body: Node2D) -> void:
-	if world_state.get_state("sees_ue"):
+func _on_spotted_target(target_body: Node2D) -> void:
+	if world_state.get_state("sees_target"):
 		return
 
-	world_state.set_state("sees_ue", true)
-	world_state.set_state("ue_target", ue_body)
+	world_state.set_state("sees_target", true)
+	world_state.set_state("known_target", target_body)
 
-	emit_signal("target_spotted", ue_body)
-	urge.on_ue_spotted()
+	emit_signal("target_spotted", target_body)
+	urge.on_target_spotted()
 
-func _on_lost_ue() -> void:
-	world_state.set_state("sees_ue", false)
+func _on_lost_target() -> void:
+	world_state.set_state("sees_target", false)
 	world_state.set_state("target_lost", true)
 
 	emit_signal("target_lost")
-	urge.on_ue_lost()
+	urge.on_target_lost()
 
 func _on_gap_closed() -> void:
 	world_state.set_state("gap_closed", true)
@@ -215,11 +215,11 @@ func _on_gap_closed() -> void:
 # DAMAGE FLOW (DECOUPLED)
 # -----------------------------------------------------------------------------
 func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
-	emit_signal("damage_received", damage_info)
+	damage_received.emit(damage_info)
 
 func _on_hit_received(damage_info: DamageInfo) -> void:
 	print(">>> GUARD: took %.1f damage" % damage_info.amount)
-	emit_signal("damage_received", damage_info)
+	damage_received.emit(damage_info)
 
 func _on_died() -> void:
 	print(">>> GUARD: died")
@@ -241,20 +241,20 @@ func _on_search_finished() -> void:
 func _on_chase_move_to(position: Vector2) -> void:
 	ai_move_component.set_target(position)
 
-func _on_ue_lost() -> void:
-	world_state.set_state("sees_ue", false)
+func _on_target_lost() -> void:
+	world_state.set_state("sees_target", false)
 	world_state.set_state("gap_closed", false)
 
 # -----------------------------------------------------------------------------
 # REFLEX HANDLERS (still routing, allowed)
 # -----------------------------------------------------------------------------
 func _on_reflex_chase_started() -> void:
-	var ue = world_state.get_state("ue_target")
-	if ue == null or chase_component.active:
+	var target = world_state.get_state("known_target")
+	if target == null or chase_component.active:
 		return
 	_clear_pending_arrivals()
 	_current_goal_name = "Chase"
-	chase_component.start_chase(ue)
+	chase_component.start_chase(target)
 
 func _on_reflex_chase_stopped() -> void:
 	chase_component.stop_chase()
