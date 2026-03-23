@@ -18,7 +18,7 @@ var actions: Array = [
 		"effects":       {"patrolling": true, "at_home": false}
 	},
 	{
-		"name":          "Chase_target",
+		"name":          "ChaseTarget",
 		"cost":          1.0,
 		"preconditions": {"sees_target": true, "gap_closed": false},
 		"effects":       {"gap_closed": true}
