@@ -73,11 +73,11 @@ func _connect_signals() -> void:
 	damage_received.connect(health_component.take_damage)
 
 	vision_component.spotted_target.connect(_on_spotted_target)
-	vision_component.lost_target.connect(_on_lost_target)
+	vision_component.lost_target.connect(_on_vision_lost_target)
 	vision_component.gap_closed_signal.connect(_on_gap_closed)
 
 	chase_component.move_to.connect(_on_chase_move_to)
-	chase_component.target_lost.connect(_on_target_lost)
+	chase_component.target_lost.connect(_on_chase_target_lost)
 
 	hurtbox_component.hurt.connect(_on_hurtbox_hurt)
 
@@ -200,7 +200,7 @@ func _on_spotted_target(target_body: Node2D) -> void:
 	emit_signal("target_spotted", target_body)
 	urge.on_target_spotted()
 
-func _on_lost_target() -> void:
+func _on_vision_lost_target() -> void:
 	world_state.set_state("sees_target", false)
 	world_state.set_state("target_lost", true)
 
@@ -241,7 +241,7 @@ func _on_search_finished() -> void:
 func _on_chase_move_to(position: Vector2) -> void:
 	ai_move_component.set_target(position)
 
-func _on_target_lost() -> void:
+func _on_chase_target_lost() -> void:
 	world_state.set_state("sees_target", false)
 	world_state.set_state("gap_closed", false)
 
