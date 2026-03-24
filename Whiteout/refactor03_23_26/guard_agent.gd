@@ -32,6 +32,7 @@ var reflex      := ReflexComponent.new()
 @export var nav_region:         NavigationRegion2D
 @export var home_position:      Vector2
 @export var personality:        PersonalityResource
+@export var knockback_component: KnockbackComponent
 
 var _current_goal_name: String = "Patrol"
 var _last_known_position:  Vector2 = Vector2.ZERO
@@ -54,6 +55,7 @@ func _ready() -> void:
 	patrol_component.nav_region    = nav_region
 	patrol_component.home_position = home_position
 	search_component.nav_region    = nav_region
+	knockback_component.setup(self)
 
 	_connect_signals()
 	_connect_reflex_signals()
@@ -81,6 +83,8 @@ func _connect_signals() -> void:
 
 	hurtbox_component.hurt.connect(_on_hurtbox_hurt)
 	hitbox_component.hit_landed.connect(_on_hit_landed)
+
+	knockback_component.knockback_finished.connect(_on_knockback_finished)
 
 	attack.attack_triggered.connect(_on_attack_triggered)
 
@@ -302,11 +306,17 @@ func _on_reflex_hurt_started() -> void:
 	hurtbox_component.set_invulnerable(true)
 	animation.play_hurt()
 	urge.on_hit_received()
+	knockback_component.apply(???, damage_info.knockback_force)
 
 func _on_reflex_death_started() -> void:
 	animation.play_death()
 	ai_move_component.stop()
 	set_process(false)
+
+func _on_knockback_finished() -> void:
+	hurtbox_component.set_invulnerable(false)
+	_replan()
+	print(">>> GUARD: knockback finished — replanning")
 
 # -----------------------------------------------------------------------------
 # CLEANUP
