@@ -80,6 +80,7 @@ func _connect_signals() -> void:
 	chase_component.target_lost.connect(_on_chase_target_lost)
 
 	hurtbox_component.hurt.connect(_on_hurtbox_hurt)
+	hitbox_component.hit_landed.connect(_on_hit_landed)
 
 	attack.attack_triggered.connect(_on_attack_triggered)
 
@@ -223,6 +224,10 @@ func _on_gap_closed() -> void:
 # -----------------------------------------------------------------------------
 # DAMAGE FLOW (DECOUPLED)
 # -----------------------------------------------------------------------------
+func _on_hit_landed(damage_info: DamageInfo) -> void:
+	urge.on_hit_landed()
+	print(">>> GUARD: hit landed — aggression fed")
+
 func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
 	damage_received.emit(damage_info)
 
@@ -296,6 +301,7 @@ func _on_reflex_attack_stopped() -> void:
 func _on_reflex_hurt_started() -> void:
 	hurtbox_component.set_invulnerable(true)
 	animation.play_hurt()
+	urge.on_hit_received()
 
 func _on_reflex_death_started() -> void:
 	animation.play_death()
