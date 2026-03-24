@@ -37,6 +37,7 @@ var reflex      := ReflexComponent.new()
 var _current_goal_name: String = "Patrol"
 var _last_known_position:  Vector2 = Vector2.ZERO
 var _last_known_direction: Vector2 = Vector2.ZERO
+var _last_damage_info: DamageInfo = null
 var _in_alert_range: bool = false
 var _in_danger_range: bool = false
 
@@ -233,6 +234,9 @@ func _on_hit_landed(damage_info: DamageInfo) -> void:
 	print(">>> GUARD: hit landed — aggression fed")
 
 func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
+	if damage_info.source != null:
+		damage_info.knockback_direction = (global_position - damage_info.source.global_position).normalized()
+	_last_damage_info = damage_info
 	damage_received.emit(damage_info)
 
 func _on_hit_received(damage_info: DamageInfo) -> void:
@@ -306,7 +310,8 @@ func _on_reflex_hurt_started() -> void:
 	hurtbox_component.set_invulnerable(true)
 	animation.play_hurt()
 	urge.on_hit_received()
-	knockback_component.apply(???, damage_info.knockback_force)
+	if _last_damage_info != null:
+		knockback_component.apply(_last_damage_info.knockback_direction, _last_damage_info.knockback_force)
 
 func _on_reflex_death_started() -> void:
 	animation.play_death()
