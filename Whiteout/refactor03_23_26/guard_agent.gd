@@ -115,15 +115,18 @@ func _setup_animation() -> void:
 func _execute_action(action: Dictionary) -> void:
     _clear_pending_arrivals()
     match action["name"]:
+
         "GoHome":
             print(">>> ACTION: going home")
             patrol_component.stop()
             search_component.stop()
             ai_move_component.destination_reached.connect(_on_arrived_home, CONNECT_ONE_SHOT)
             ai_move_component.set_target(home_position)
+
         "GoPatrol":
             print(">>> ACTION: going on patrol")
             patrol_component.start()
+
         "ChaseTarget":
             print(">>> ACTION: chasing TARGET")
             var target = world_state.get_state("known_target")
@@ -131,6 +134,7 @@ func _execute_action(action: Dictionary) -> void:
                 patrol_component.stop()
                 search_component.stop()
                 chase_component.start_chase(target)
+
         "Attack":
             print(">>> ACTION: attacking TARGET")
 			attack.try_attack()
