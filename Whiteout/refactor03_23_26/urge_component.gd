@@ -21,6 +21,8 @@ var aggression_build_rate:  float = 0.10
 var aggression_decay_rate:  float = 0.06
 var aggression_spike:       float = 0.7
 var hit_landed_bonus:       float = 0.15
+var hit_received_comfort_spike:    float = 0.2
+var hit_received_aggression_spike: float = 0.2
 
 var curiosity_build_rate:   float = 0.02
 var curiosity_decay_rate:   float = 0.05
@@ -53,6 +55,8 @@ func apply_personality(p: PersonalityResource) -> void:
 	aggression_decay_rate = lerp(0.12, 0.01, a)
 	aggression_spike      = lerp(0.4,  1.0,  a)
 	hit_landed_bonus      = lerp(0.05, 0.25, a)
+	hit_received_comfort_spike    = lerp(0.4,  0.05, a)
+	hit_received_aggression_spike = lerp(0.05, 0.4,  a)
 
 	comfort_build_rate    = lerp(0.01, 0.05, c)
 	comfort_decay_rate    = lerp(0.05, 0.01, c)
@@ -136,6 +140,16 @@ func on_gap_closed() -> void:
 func on_hit_landed() -> void:
 	aggression_urge = min(1.0, aggression_urge + hit_landed_bonus)
 	print(">>> URGE: hit landed — aggression bonus")
+
+# -----------------------------------------------------------------------------
+# on_hit_received — took a hit, emotional wave follows the body reaction
+# low aggression: comfort spikes hard, wants to flee
+# high aggression: aggression spikes, wants to fight back
+# -----------------------------------------------------------------------------
+func on_hit_received() -> void:
+	comfort_urge    = min(1.0, comfort_urge + hit_received_comfort_spike)
+	aggression_urge = min(1.0, aggression_urge + hit_received_aggression_spike)
+	print(">>> URGE: hit received — comfort: %.2f | aggression: %.2f" % [comfort_urge, aggression_urge])
 
 # -----------------------------------------------------------------------------
 # _decay_toward
