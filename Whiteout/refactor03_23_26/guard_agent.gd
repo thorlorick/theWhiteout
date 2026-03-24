@@ -133,6 +133,8 @@ func _execute_action(action: Dictionary) -> void:
                 chase_component.start_chase(target)
         "Attack":
             print(">>> ACTION: attacking TARGET")
+			attack.try_attack()
+
         "Search":
             print(">>> ACTION: searching for lost target")
             patrol_component.stop()
