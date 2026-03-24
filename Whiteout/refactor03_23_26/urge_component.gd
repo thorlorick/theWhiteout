@@ -21,6 +21,8 @@ var aggression_build_rate:  float = 0.10
 var aggression_decay_rate:  float = 0.06
 var aggression_spike:       float = 0.7
 var hit_landed_bonus:       float = 0.15
+var target_spotted_comfort_drop:    float = 0.1
+var target_spotted_aggression_bump: float = 0.1
 var hit_received_comfort_spike:    float = 0.2
 var hit_received_aggression_spike: float = 0.2
 
@@ -57,6 +59,8 @@ func apply_personality(p: PersonalityResource) -> void:
 	hit_landed_bonus      = lerp(0.05, 0.25, a)
 	hit_received_comfort_spike    = lerp(0.4,  0.05, a)
 	hit_received_aggression_spike = lerp(0.05, 0.4,  a)
+	target_spotted_comfort_drop    = lerp(0.2,  0.05, a)
+	target_spotted_aggression_bump = lerp(0.05, 0.2,  a)
 
 	comfort_build_rate    = lerp(0.01, 0.05, c)
 	comfort_decay_rate    = lerp(0.05, 0.01, c)
@@ -116,8 +120,8 @@ func on_alert_tick(delta: float) -> void:
 # on_target_spotted — confirmed sighting, threat registered
 # -----------------------------------------------------------------------------
 func on_target_spotted() -> void:
-	comfort_urge    = max(COMFORT_URGE_REST, comfort_urge - 0.1)
-	aggression_urge = min(1.0, aggression_urge + 0.1)
+	comfort_urge    = max(COMFORT_URGE_REST, comfort_urge - target_spotted_comfort_drop)
+	aggression_urge = min(1.0, aggression_urge + target_spotted_aggression_bump)
 	print(">>> URGE: target spotted — threat registered")
 
 # -----------------------------------------------------------------------------
