@@ -81,6 +81,8 @@ func _connect_signals() -> void:
 
 	hurtbox_component.hurt.connect(_on_hurtbox_hurt)
 
+	attack.attack_triggered.connect(_on_attack_triggered)
+
 	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
 	search_component.search_move_to.connect(_on_search_move_to)
 	search_component.search_finished.connect(_on_search_finished)
@@ -220,6 +222,10 @@ func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
 func _on_hit_received(damage_info: DamageInfo) -> void:
 	print(">>> GUARD: took %.1f damage" % damage_info.amount)
 	reflex.on_hit_received()
+
+func _on_attack_triggered(damage_info: DamageInfo) -> void:
+	hitbox_component.activate(damage_info)
+	animation.play_attack(attack.is_running())
 
 func _on_died() -> void:
 	print(">>> GUARD: died")
