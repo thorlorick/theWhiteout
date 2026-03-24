@@ -219,10 +219,11 @@ func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
 
 func _on_hit_received(damage_info: DamageInfo) -> void:
 	print(">>> GUARD: took %.1f damage" % damage_info.amount)
-	damage_received.emit(damage_info)
+	reflex.on_hit_received()
 
 func _on_died() -> void:
 	print(">>> GUARD: died")
+	reflex.on_died()
 
 # -----------------------------------------------------------------------------
 # MOVEMENT ROUTING
