@@ -31,10 +31,16 @@ func update(direction: Vector2, is_moving: bool, is_running: bool) -> void:
 		state_machine.travel("idle")
 
 func play_attack(is_running: bool) -> void:
-	pass
+	var state_machine = animation_tree["parameters/playback"] as AnimationNodeStateMachinePlayback
+	if is_running:
+		state_machine.travel("run_attack")
+	else:
+		state_machine.travel("walk_attack")
 
 func play_hurt() -> void:
-	pass
+	var state_machine = animation_tree["parameters/playback"] as AnimationNodeStateMachinePlayback
+	state_machine.travel("hurt")
 
 func play_death() -> void:
-	pass
+	var state_machine = animation_tree["parameters/playback"] as AnimationNodeStateMachinePlayback
+	state_machine.travel("death")
