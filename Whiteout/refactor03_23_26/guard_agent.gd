@@ -110,9 +110,10 @@ func _setup_animation() -> void:
 	animation.setup(anim_tree)
 
 # -----------------------------------------------------------------------------
-# execute action
+# _on_best_chosen_action — planner has spoken, agent routes to components
+# no decisions made here, just the right doors knocked on
 # -----------------------------------------------------------------------------
-func _execute_action(action: Dictionary) -> void:
+func _on_best_chosen_action(action: Dictionary) -> void:
     _clear_pending_arrivals()
     match action["name"]:
 
@@ -193,7 +194,7 @@ func _replan() -> void:
             best_goal["name"],
             best_action["name"]
         ])
-        _execute_action(best_action)
+        _on_best_chosen_action(best_action)
 
 # -----------------------------------------------------------------------------
 # EVENTS → SIGNAL HUB
