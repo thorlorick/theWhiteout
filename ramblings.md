@@ -47,3 +47,7 @@ The agent's job is hear and shout — update world state, tell urges, tell refle
 The system is working and producing believable emergent behavior — a guard who patrols, spots, chases, attacks, searches, and decides to go home when comfort wins over curiosity. No combat system, health bars, or knockback yet — those are next. Knockback should slot in cleanly as a reflex interrupt that jolts the urge system emotionally based on personality, then lets the planner decide what happens next."
 
 ALRIGHT, ALRIGHT, ALRIGHT.....not bad....!!
+
+# March 23, 2026
+It's been a busy day...a day???? oh man....anyways. The reflex refactor, as it's coming to be known, was a mess. Luckily our component structure held firm and we contained the mess, but oh what a mess. I think we are close, but no testing has been done,....and still no combat system to speak of. We got rid of UE from the code, so everything says target this and target that...much more boring, but I understand the reasoning behind it.
+I also want/need to develop some more goals and actions for more advanced AI enemies. right now they just go off their urges...very, un-intelligent...but with a few more actions and possibly a few more urges, then we will have a nice system with costs and goals, and decisions. BUT, for now...combat!!!!!
