@@ -275,6 +275,16 @@ func _on_died() -> void:
 # -----------------------------------------------------------------------------
 # MOVEMENT ROUTING
 # -----------------------------------------------------------------------------
+func _on_arrived_home() -> void:
+	print(">>> ARRIVED HOME")
+	world_state.set_state("at_home",      true)
+	world_state.set_state("patrolling",   false)
+	world_state.set_state("gap_closed",   false)
+	world_state.set_state("target_lost",  false)
+	world_state.set_state("target_found", true)
+	search_component.stop()
+	ai_move_component.stop()
+
 func _on_new_patrol_target(position: Vector2) -> void:
 	ai_move_component.destination_reached.connect(patrol_component.arrived, CONNECT_ONE_SHOT)
 	ai_move_component.set_target(position)
