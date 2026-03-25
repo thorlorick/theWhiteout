@@ -44,6 +44,7 @@ func on_target_spotted() -> void:
 func on_target_lost() -> void:
 	print(">>> REFLEX: target lost — interrupt stop chase, reset speed")
 	interrupt_chase_stopped.emit()
+	interrupt_patrol_stopped.emit()
 	interrupt_speed_reset.emit()
 
 # -----------------------------------------------------------------------------
