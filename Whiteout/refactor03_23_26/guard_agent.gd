@@ -79,6 +79,7 @@ func _connect_signals() -> void:
 
 	vision_component.spotted_target.connect(_on_spotted_target)
 	vision_component.lost_target.connect(_on_vision_lost_target)
+	vision_component.danger_range.connect(_on_danger_range)
 	vision_component.gap_closed_signal.connect(_on_gap_closed)
 
 	chase_component.move_to.connect(_on_chase_move_to)
@@ -125,37 +126,36 @@ func _setup_animation() -> void:
 # no decisions made here, just the right doors knocked on
 # -----------------------------------------------------------------------------
 func _on_best_chosen_action(action: Dictionary) -> void:
-    _clear_pending_arrivals()
-    match action["name"]:
+	_clear_pending_arrivals()
+	match action["name"]:
 
-        "GoHome":
-            print(">>> ACTION: going home")
-            patrol_component.stop()
-            search_component.stop()
-            ai_move_component.destination_reached.connect(_on_arrived_home, CONNECT_ONE_SHOT)
-            ai_move_component.set_target(home_position)
+		"GoHome":
+			print(">>> ACTION: going home")
+			patrol_component.stop()
+			search_component.stop()
+			ai_move_component.destination_reached.connect(_on_arrived_home, CONNECT_ONE_SHOT)
+			ai_move_component.set_target(home_position)
 
-        "GoPatrol":
-            print(">>> ACTION: going on patrol")
-            patrol_component.start()
+		"GoPatrol":
+			print(">>> ACTION: going on patrol")
+			patrol_component.start()
 
-        "ChaseTarget":
-            print(">>> ACTION: chasing TARGET")
-            var target = world_state.get_state("known_target")
-            if target != null and not chase_component.active:
-                patrol_component.stop()
-                search_component.stop()
-                chase_component.start_chase(target)
+		"ChaseTarget":
+			print(">>> ACTION: chasing TARGET")
+			var target = world_state.get_state("known_target")
+			if target != null and not chase_component.active:
+				patrol_component.stop()
+				search_component.stop()
+				chase_component.start_chase(target)
 
-        "Attack":
-            print(">>> ACTION: attacking TARGET")
+		"Attack":
+			print(">>> ACTION: attacking TARGET")
 			attack.try_attack()
 
-        "Search":
-            print(">>> ACTION: searching for lost target")
-            patrol_component.stop()
-            search_component.start_search(_last_known_position, _last_known_direction)
-
+		"Search":
+			print(">>> ACTION: searching for lost target")
+			patrol_component.stop()
+			search_component.start_search(_last_known_position, _last_known_direction)
 
 # -----------------------------------------------------------------------------
 # PROCESS (NO DECISIONS HERE)
@@ -193,19 +193,19 @@ func _get_guard_state() -> String:
 # REPLAN → EMITS INTENT ONLY
 # -----------------------------------------------------------------------------
 func _replan() -> void:
-    var best_goal = planner.get_best_goal(goals.goals, _current_goal_name)
-    if planner.is_goal_satisfied(best_goal, world_state):
-        return
-    var best_action = planner.get_best_action(best_goal, actions.actions, world_state)
-    if best_action.is_empty():
-        return
-    if best_goal["name"] != _current_goal_name:
-        _current_goal_name = best_goal["name"]
-        print(">>> REPLAN — goal: %s | action: %s" % [
-            best_goal["name"],
-            best_action["name"]
-        ])
-        _on_best_chosen_action(best_action)
+	var best_goal = planner.get_best_goal(goals.goals, _current_goal_name)
+	if planner.is_goal_satisfied(best_goal, world_state):
+		return
+	var best_action = planner.get_best_action(best_goal, actions.actions, world_state)
+	if best_action.is_empty():
+		return
+	if best_goal["name"] != _current_goal_name:
+		_current_goal_name = best_goal["name"]
+		print(">>> REPLAN — goal: %s | action: %s" % [
+			best_goal["name"],
+			best_action["name"]
+		])
+		_on_best_chosen_action(best_action)
 
 # -----------------------------------------------------------------------------
 # EVENTS → SIGNAL HUB
@@ -228,10 +228,16 @@ func _on_vision_lost_target() -> void:
 
 	emit_signal("target_lost")
 	urge.on_target_lost()
+	reflex.on_target_lost()
+
+func _on_danger_range(_target_body: Node2D) -> void:
+	_in_danger_range = true
+	reflex.on_danger_entered()
 
 func _on_gap_closed() -> void:
 	world_state.set_state("gap_closed", true)
 	urge.on_gap_closed()
+	reflex.on_gap_closed()
 
 # -----------------------------------------------------------------------------
 # DAMAGE FLOW (DECOUPLED)
@@ -286,6 +292,7 @@ func _on_chase_move_to(position: Vector2) -> void:
 func _on_chase_target_lost() -> void:
 	world_state.set_state("sees_target", false)
 	world_state.set_state("gap_closed", false)
+	reflex.on_chase_target_lost()
 
 # -----------------------------------------------------------------------------
 # REFLEX HANDLERS (still routing, allowed)
@@ -342,9 +349,9 @@ func _on_knockback_finished() -> void:
 # CLEANUP
 # -----------------------------------------------------------------------------
 func _clear_pending_arrivals() -> void:
-    if ai_move_component.destination_reached.is_connected(patrol_component.arrived):
-        ai_move_component.destination_reached.disconnect(patrol_component.arrived)
-    if ai_move_component.destination_reached.is_connected(search_component.arrived):
-        ai_move_component.destination_reached.disconnect(search_component.arrived)
-    if ai_move_component.destination_reached.is_connected(_on_arrived_home):
-        ai_move_component.destination_reached.disconnect(_on_arrived_home)
+	if ai_move_component.destination_reached.is_connected(patrol_component.arrived):
+		ai_move_component.destination_reached.disconnect(patrol_component.arrived)
+	if ai_move_component.destination_reached.is_connected(search_component.arrived):
+		ai_move_component.destination_reached.disconnect(search_component.arrived)
+	if ai_move_component.destination_reached.is_connected(_on_arrived_home):
+		ai_move_component.destination_reached.disconnect(_on_arrived_home)
