@@ -54,6 +54,14 @@ func on_chase_target_lost() -> void:
 	interrupt_speed_reset.emit()
 
 # -----------------------------------------------------------------------------
+# on_gap_closed — strike distance reached, stop chasing, start attacking
+# -----------------------------------------------------------------------------
+func on_gap_closed() -> void:
+	print(">>> REFLEX: gap closed — interrupt chase, start attack")
+	interrupt_chase_stopped.emit()
+	interrupt_attack_stopped.emit()
+
+# -----------------------------------------------------------------------------
 # on_target_died — target eliminated, full stop
 # -----------------------------------------------------------------------------
 func on_target_died() -> void:
