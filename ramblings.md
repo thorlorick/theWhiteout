@@ -51,3 +51,6 @@ ALRIGHT, ALRIGHT, ALRIGHT.....not bad....!!
 # March 23, 2026
 It's been a busy day...a day???? oh man....anyways. The reflex refactor, as it's coming to be known, was a mess. Luckily our component structure held firm and we contained the mess, but oh what a mess. I think we are close, but no testing has been done,....and still no combat system to speak of. We got rid of UE from the code, so everything says target this and target that...much more boring, but I understand the reasoning behind it.
 I also want/need to develop some more goals and actions for more advanced AI enemies. right now they just go off their urges...very, un-intelligent...but with a few more actions and possibly a few more urges, then we will have a nice system with costs and goals, and decisions. BUT, for now...combat!!!!!
+
+# March 25, 2026
+Refactor has been hell!!!!! The whole thing just completely shut down. I've spent the last two days rebuilding everything, so it's been a worthwhile experience. I've bulked up the vision a bit and added some debuggin to it so it's easier to see. I really need to get combat up and running.
