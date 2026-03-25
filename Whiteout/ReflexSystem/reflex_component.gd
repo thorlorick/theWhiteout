@@ -36,6 +36,7 @@ func on_target_spotted() -> void:
 	print(">>> REFLEX: target spotted — drop everything, start chase")
 	interrupt_patrol_stopped.emit()
 	interrupt_search_stopped.emit()
+	interrupt_run_started.emit()
 
 # -----------------------------------------------------------------------------
 # on_target_lost — lost visual, stop chasing and reset speed
@@ -83,7 +84,7 @@ func on_hit_received() -> void:
 func on_died() -> void:
 	print(">>> REFLEX: died — interrupt everything, play death")
 	interrupt_attack_stopped.emit()
-  interrupt_chase_stopped.emit()
+	interrupt_chase_stopped.emit()
 	interrupt_patrol_stopped.emit()
 	interrupt_search_stopped.emit()
 	interrupt_movement_stopped.emit()
