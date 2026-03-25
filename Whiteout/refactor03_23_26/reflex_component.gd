@@ -83,7 +83,7 @@ func on_hit_received() -> void:
 func on_died() -> void:
 	print(">>> REFLEX: died — interrupt everything, play death")
 	interrupt_attack_stopped.emit()
-  interrupt_chase_stopped.emit()
+	interrupt_chase_stopped.emit()
 	interrupt_patrol_stopped.emit()
 	interrupt_search_stopped.emit()
 	interrupt_movement_stopped.emit()
