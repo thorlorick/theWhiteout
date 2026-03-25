@@ -41,6 +41,8 @@ var _last_damage_info: DamageInfo = null
 var _in_alert_range: bool = false
 var _in_danger_range: bool = false
 
+var animation_events: AnimationEvents
+
 # -----------------------------------------------------------------------------
 # READY
 # -----------------------------------------------------------------------------
@@ -114,6 +116,9 @@ func _connect_reflex_signals() -> void:
 func _setup_animation() -> void:
 	var anim_tree = $EnemyAnimations/AnimationTree
 	animation.setup(anim_tree)
+	animation_events = $EnemyAnimations
+	animation_events.hit_frame_reached.connect(_on_attack_hit_frame)
+	animation_events.attack_animation_finished.connect(_on_attack_animation_finished)
 
 # -----------------------------------------------------------------------------
 # _on_best_chosen_action — planner has spoken, agent routes to components
@@ -246,6 +251,15 @@ func _on_hit_received(damage_info: DamageInfo) -> void:
 func _on_attack_triggered(damage_info: DamageInfo) -> void:
 	hitbox_component.activate(damage_info)
 	animation.play_attack(attack.is_running())
+
+func _on_attack_hit_frame() -> void:
+	print(">>> GUARD: hit frame reached")
+	hitbox_component.activate(attack.get_pending_damage_info())
+
+func _on_attack_animation_finished() -> void:
+	hitbox_component.deactivate()
+	attack.on_attack_finished()
+	print(">>> GUARD: attack animation finished")
 
 func _on_died() -> void:
 	print(">>> GUARD: died")
