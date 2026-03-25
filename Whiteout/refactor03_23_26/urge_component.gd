@@ -156,6 +156,21 @@ func on_hit_received() -> void:
 	print(">>> URGE: hit received — comfort: %.2f | aggression: %.2f" % [comfort_urge, aggression_urge])
 
 # -----------------------------------------------------------------------------
+# committed_to_patrol — guard just left home
+# -----------------------------------------------------------------------------
+func committed_to_patrol() -> void:
+	comfort_urge = COMFORT_URGE_REST
+	duty_urge    = 0.6
+	print(">>> URGE: committed to patrol — comfort reset, duty boosted")
+
+# -----------------------------------------------------------------------------
+# committed_to_search — curiosity committed, reset other urges slightly
+# -----------------------------------------------------------------------------
+func committed_to_search() -> void:
+	curiosity_urge = 0.8
+	print(">>> URGE: committed to search"
+
+# -----------------------------------------------------------------------------
 # _decay_toward
 # -----------------------------------------------------------------------------
 func _decay_toward(current: float, target: float, rate: float, delta: float) -> float:
