@@ -168,7 +168,7 @@ func committed_to_patrol() -> void:
 # -----------------------------------------------------------------------------
 func committed_to_search() -> void:
 	curiosity_urge = min(1.0, curiosity_urge + 0.8)  # spike curiosity
-	print(">>> URGE: committed to search"
+	print(">>> URGE: committed to search")
 
 # -----------------------------------------------------------------------------
 # _decay_toward
