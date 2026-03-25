@@ -219,6 +219,8 @@ func _on_spotted_target(target_body: Node2D) -> void:
 
 	emit_signal("target_spotted", target_body)
 	urge.on_target_spotted()
+	reflex.on_target_spotted()
+	_replan()
 
 func _on_vision_lost_target() -> void:
 	world_state.set_state("sees_target", false)
