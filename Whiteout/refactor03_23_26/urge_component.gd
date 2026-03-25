@@ -160,14 +160,14 @@ func on_hit_received() -> void:
 # -----------------------------------------------------------------------------
 func committed_to_patrol() -> void:
 	comfort_urge = COMFORT_URGE_REST
-	duty_urge    = 0.6
+	duty_urge = min(1.0, duty_urge + 0.3) 
 	print(">>> URGE: committed to patrol — comfort reset, duty boosted")
 
 # -----------------------------------------------------------------------------
 # committed_to_search — curiosity committed, reset other urges slightly
 # -----------------------------------------------------------------------------
 func committed_to_search() -> void:
-	curiosity_urge = 0.8
+	curiosity_urge = min(1.0, curiosity_urge + 0.8)  # spike curiosity
 	print(">>> URGE: committed to search"
 
 # -----------------------------------------------------------------------------
