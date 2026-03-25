@@ -41,7 +41,7 @@ var _last_damage_info: DamageInfo = null
 var _in_alert_range: bool = false
 var _in_danger_range: bool = false
 
-var animation_events: AnimationEvents
+var animation_events: EnemyAnimationEvents
 
 # -----------------------------------------------------------------------------
 # READY
