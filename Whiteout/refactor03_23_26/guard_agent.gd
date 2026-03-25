@@ -249,7 +249,6 @@ func _on_hit_received(damage_info: DamageInfo) -> void:
 	reflex.on_hit_received()
 
 func _on_attack_triggered(damage_info: DamageInfo) -> void:
-	hitbox_component.activate(damage_info)
 	animation.play_attack(attack.is_running())
 
 func _on_attack_hit_frame() -> void:
