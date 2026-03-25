@@ -27,7 +27,7 @@ var actions: Array = [
 		"name":          "Attack",
 		"cost":          1.0,
 		"preconditions": {"sees_target": true, "gap_closed": true},
-		"effects":       {"is_attacking": true}
+		"effects":       {"target_eliminated": true}
 	},
 	{
 		"name":          "Search",
