@@ -10,11 +10,10 @@ extends Node
 # -----------------------------------------------------------------------------
 signal attack_triggered(damage_info: DamageInfo)
 signal attack_finished
-
 @export var personality: PersonalityResource
-
 var _can_attack: bool = true
 var _is_running: bool = false
+var _pending_damage_info: DamageInfo = null  # stored until hit frame
 # -----------------------------------------------------------------------------
 # set_running — called by agent when velocity_changed fires
 # -----------------------------------------------------------------------------
@@ -27,10 +26,10 @@ func try_attack() -> void:
 	if not _can_attack:
 		return
 	_can_attack = false
-	var damage_info = _build_damage_info()
+	_pending_damage_info = _build_damage_info()
 	var label = "run_attack" if _is_running else "walk_attack"
 	print(">>> ATTACK: %s triggered" % label)
-	attack_triggered.emit(damage_info)
+	attack_triggered.emit(_pending_damage_info)
 # -----------------------------------------------------------------------------
 # _build_damage_info — package up damage based on current movement state
 # -----------------------------------------------------------------------------
@@ -49,6 +48,7 @@ func _build_damage_info() -> DamageInfo:
 # -----------------------------------------------------------------------------
 func on_attack_finished() -> void:
 	_can_attack = true
+	_pending_damage_info = null
 	print(">>> ATTACK: finished, ready")
 	attack_finished.emit()
 # -----------------------------------------------------------------------------
@@ -56,3 +56,4 @@ func on_attack_finished() -> void:
 # -----------------------------------------------------------------------------
 func can_attack() -> bool: return _can_attack
 func is_running() -> bool: return _is_running
+func get_pending_damage_info() -> DamageInfo: return _pending_damage_info
