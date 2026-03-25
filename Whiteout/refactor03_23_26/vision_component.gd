@@ -155,7 +155,7 @@ func _cast_rays(delta: float) -> void:
 			query.exclude        = [body]
 			query.collision_mask = 1
 			var result  = space_state.intersect_ray(query)
-        if result and result.collider.is_in_group("player"):
+			if result and result.collider.is_in_group("player"):
 				hits      += 1
 				hit_angle  = lerp(-half_spread, half_spread, t)
 				_last_seen_body = result.collider
