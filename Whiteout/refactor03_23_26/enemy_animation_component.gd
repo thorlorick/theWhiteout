@@ -1,28 +1,43 @@
 class_name EnemyAnimationComponent
 extends Node
+
 # -----------------------------------------------------------------------------
 # EnemyAnimationComponent
-# Receives direction + state from GuardAgent.
-# Drives AnimationTree blendspaces and conditions.
-# Knows nothing about AI, movement, or health — just animations.
+# Pure animation driver.
+# Receives direction + movement state + attack triggers.
 # -----------------------------------------------------------------------------
 
-var animation_tree:  AnimationTree
+var animation_tree: AnimationTree
+var state_machine: AnimationNodeStateMachinePlayback
+
 var current_direction: Vector2 = Vector2.DOWN
+var is_attacking: bool = false
+
+# -----------------------------------------------------------------------------
 
 func setup(tree: AnimationTree) -> void:
 	animation_tree = tree
+	state_machine = animation_tree["parameters/playback"]
+
+# -----------------------------------------------------------------------------
 
 func update(direction: Vector2, is_moving: bool, is_running: bool) -> void:
+	# Always update facing direction
 	if direction != Vector2.ZERO:
-		current_direction = direction
+		current_direction = direction.normalized()
 
+	# Always feed direction into ALL blendspaces
+	animation_tree["parameters/idle/blend_position"] = current_direction
 	animation_tree["parameters/walk/blend_position"] = current_direction
 	animation_tree["parameters/run/blend_position"]  = current_direction
-	animation_tree["parameters/idle/blend_position"] = current_direction
+	animation_tree["parameters/walk_attack/blend_position"] = current_direction
+	animation_tree["parameters/run_attack/blend_position"]  = current_direction
 
-	var state_machine = animation_tree["parameters/playback"] as AnimationNodeStateMachinePlayback
+	# 🚨 If attacking → DO NOT override state
+	if is_attacking:
+		return
 
+	# Normal movement state control
 	if is_running and direction != Vector2.ZERO:
 		state_machine.travel("run")
 	elif is_moving and direction != Vector2.ZERO:
@@ -30,17 +45,22 @@ func update(direction: Vector2, is_moving: bool, is_running: bool) -> void:
 	else:
 		state_machine.travel("idle")
 
+# -----------------------------------------------------------------------------
+
 func play_attack(is_running: bool) -> void:
-	var state_machine = animation_tree["parameters/playback"] as AnimationNodeStateMachinePlayback
+	if is_attacking:
+		return
+
+	is_attacking = true
+
 	if is_running:
 		state_machine.travel("run_attack")
 	else:
 		state_machine.travel("walk_attack")
 
-func play_hurt() -> void:
-	var state_machine = animation_tree["parameters/playback"] as AnimationNodeStateMachinePlayback
-	state_machine.travel("hurt")
+# -----------------------------------------------------------------------------
+# Called from AnimationPlayer (end of attack animation)
+# -----------------------------------------------------------------------------
 
-func play_death() -> void:
-	var state_machine = animation_tree["parameters/playback"] as AnimationNodeStateMachinePlayback
-	state_machine.travel("death")
+func on_attack_finished() -> void:
+	is_attacking = false
