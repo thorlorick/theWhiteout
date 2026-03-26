@@ -23,47 +23,48 @@ signal gap_closed_signal()
 # EXPORTS
 # -----------------------------------------------------------------------------
 @export_group("Setup")
-@export var body:               CharacterBody2D
+@export var body:                CharacterBody2D
 @export var wall_collision_mask: int   = 1
-@export var debug_draw:         bool   = true
+@export var debug_draw:          bool  = true
 
 @export_group("Rays")
-@export var ray_count:          int    = 5
-@export var ray_length:         float  = 200.0
-@export var cone_half_spread:   float  = 10.0     # half-width of ray fan in degrees — widen this
+@export var ray_count:           int   = 5
+@export var ray_length:          float = 200.0
+@export var cone_half_spread:    float = 10.0
+@export var head_offset:         float = 12.0
 
 @export_group("Distances")
-@export var alert_distance:     float  = 150.0
-@export var danger_distance:    float  = 100.0
-@export var strike_distance:    float  = 40.0
+@export var alert_distance:      float = 150.0
+@export var danger_distance:     float = 100.0
+@export var strike_distance:     float = 40.0
 
 @export_group("Detection")
-@export var alert_threshold:    float  = 0.3
-@export var fill_rate_center:   float  = 2.5
-@export var fill_rate_edge:     float  = 1.0
-@export var drain_rate:         float  = 1.5
-@export var lost_timer_max:     float  = 0.5
+@export var alert_threshold:     float = 0.3
+@export var fill_rate_center:    float = 2.5
+@export var fill_rate_edge:      float = 1.0
+@export var drain_rate:          float = 1.5
+@export var lost_timer_max:      float = 0.5
 
 @export_group("Sweep")
-@export var sweep_angle:        float  = 25.0
-@export var sweep_speed:        float  = 60.0
+@export var sweep_angle:         float = 25.0
+@export var sweep_speed:         float = 60.0
 
 @export_group("Look Around")
-@export var look_angles:        Array  = [-40.0, 0.0, 40.0, 0.0]
-@export var look_step_time:     float  = 0.8
+@export var look_angles:         Array = [-40.0, 0.0, 40.0, 0.0]
+@export var look_step_time:      float = 0.8
 
 # -----------------------------------------------------------------------------
 # INTERNAL STATE
 # -----------------------------------------------------------------------------
-var facing:          Vector2 = Vector2.DOWN
-var space_state:     PhysicsDirectSpaceState2D
+var facing:       Vector2 = Vector2.DOWN
+var space_state:  PhysicsDirectSpaceState2D
 
-var _was_seeing_target:  bool  = false
-var _lost_timer:         float = 0.0
-var _last_seen_body:     Node2D = null
+var _was_seeing_target: bool   = false
+var _lost_timer:        float  = 0.0
+var _last_seen_body:    Node2D = null
 
-var _sweep_angle:    float = 0.0
-var _sweep_dir:      float = 1.0
+var _sweep_angle: float = 0.0
+var _sweep_dir:   float = 1.0
 
 var _is_moving:      bool  = false
 var _look_step:      int   = 0
@@ -91,7 +92,25 @@ func _physics_process(delta: float) -> void:
 	_cast_rays(delta)
 
 # -----------------------------------------------------------------------------
-# update_direction
+# apply_awareness — called by GuardAgent when personality is assigned
+# translates 0-10 awareness score into vision behaviour via lerp
+# leave distances, threshold, sweep_angle, and look_around alone —
+# those are level design decisions, not guard sharpness
+# -----------------------------------------------------------------------------
+func apply_awareness(a: int) -> void:
+	var t = a / 10.0
+
+	ray_count        = int(lerp(3.0,  11.0, t))
+	ray_length       = lerp(120.0, 280.0, t)
+	cone_half_spread = lerp(6.0,   18.0,  t)
+	fill_rate_center = lerp(1.0,   4.0,   t)
+	fill_rate_edge   = lerp(0.5,   2.0,   t)
+	drain_rate       = lerp(2.5,   0.5,   t)
+	lost_timer_max   = lerp(0.2,   1.2,   t)
+	sweep_speed      = lerp(30.0,  80.0,  t)
+
+# -----------------------------------------------------------------------------
+# update_direction — called by GuardAgent when velocity_changed fires
 # -----------------------------------------------------------------------------
 func update_direction(direction: Vector2, is_moving: bool, is_running: bool) -> void:
 	var was_moving = _is_moving
@@ -145,13 +164,16 @@ func _cast_rays(delta: float) -> void:
 	var hits:      int   = 0
 	var hit_angle: float = 0.0
 
+	# offset ray origin to head position
+	var ray_origin = body.global_position + facing * head_offset
+
 	var gaze = facing.rotated(deg_to_rad(_sweep_angle))
 	for i in range(ray_count):
 		var t       = float(i) / float(ray_count - 1) if ray_count > 1 else 0.0
 		var angle   = lerp(-cone_half_spread, cone_half_spread, t)
 		var ray_dir = gaze.rotated(deg_to_rad(angle))
-		var target  = body.global_position + ray_dir * ray_length
-		var query   = PhysicsRayQueryParameters2D.create(body.global_position, target)
+		var target  = ray_origin + ray_dir * ray_length
+		var query   = PhysicsRayQueryParameters2D.create(ray_origin, target)
 		query.exclude        = [body]
 		query.collision_mask = wall_collision_mask
 		var result  = space_state.intersect_ray(query)
@@ -161,12 +183,18 @@ func _cast_rays(delta: float) -> void:
 			_last_seen_body = result.collider
 
 	if hits > 0:
-		_homing            = true
-		_gaze_target_angle = _sweep_angle + hit_angle
+		_homing = true
+		# calculate gaze angle from actual direction to player —
+		# prevents lurch when detection confirms mid-sweep
+		var to_target       = (_last_seen_body.global_position - body.global_position).normalized()
+		var facing_angle    = rad_to_deg(facing.angle())
+		var target_angle    = rad_to_deg(to_target.angle())
+		_gaze_target_angle  = target_angle - facing_angle
 
 		var fill_rate = lerp(fill_rate_edge, fill_rate_center, float(hits) / float(ray_count))
 		_detection_value = min(1.0, _detection_value + fill_rate * delta)
 
+		# distance always measured from body center, not head
 		var dist = body.global_position.distance_to(_last_seen_body.global_position)
 
 		if _detection_value >= alert_threshold and not _in_alert_range:
@@ -268,20 +296,22 @@ func _draw_cone(offset: Vector2) -> void:
 	var t     = _detection_value
 	var color = Color(t, 1.0 - t, 0.0, 0.45)
 
+	# draw cone from head position, same as rays
+	var head = offset + facing * head_offset
 	var gaze = facing.rotated(deg_to_rad(_sweep_angle))
 
 	for i in range(ray_count):
 		var pct     = float(i) / float(ray_count - 1) if ray_count > 1 else 0.0
 		var angle   = lerp(-cone_half_spread, cone_half_spread, pct)
 		var ray_dir = gaze.rotated(deg_to_rad(angle))
-		var end     = offset + ray_dir * ray_length
-		draw_line(offset, end, color, 1.5)
+		var end     = head + ray_dir * ray_length
+		draw_line(head, end, color, 1.5)
 
 	var left_dir   = gaze.rotated(deg_to_rad(-cone_half_spread))
 	var right_dir  = gaze.rotated(deg_to_rad( cone_half_spread))
 	var edge_color = Color(color.r, color.g, color.b, 0.8)
-	draw_line(offset, offset + left_dir  * ray_length, edge_color, 1.0)
-	draw_line(offset, offset + right_dir * ray_length, edge_color, 1.0)
+	draw_line(head, head + left_dir  * ray_length, edge_color, 1.0)
+	draw_line(head, head + right_dir * ray_length, edge_color, 1.0)
 
 func _draw_detection_meter(offset: Vector2) -> void:
 	var bar_width  = 30.0
