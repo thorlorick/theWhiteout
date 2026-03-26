@@ -50,6 +50,7 @@ func _ready() -> void:
 	if personality != null:
 		urge.apply_personality(personality)
 		attack.personality = personality
+		vision_component.apply_awareness(personality.awareness)
 
 	add_child(attack)
 
