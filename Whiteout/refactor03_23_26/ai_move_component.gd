@@ -1,21 +1,20 @@
 class_name AIMoveComponent
 extends Node
-# -----------------------------------------------------------------------------
-# AIMoveComponent
-# Moves the body along a navigation path.
-# Emits velocity as a Vector2 — no string conversion here.
-# -----------------------------------------------------------------------------
+
 signal destination_reached
 signal velocity_changed(direction: Vector2, is_moving: bool, is_running: bool)
 
 @export var body:  CharacterBody2D
 @export var agent: NavigationAgent2D
+@export var speed_component: SpeedComponent  # <-- add this export
 
 var speed:      float = 100.0
 var is_running: bool  = false
 
 func _ready() -> void:
 	agent.navigation_finished.connect(_on_navigation_finished)
+	if speed_component:
+		speed = speed_component.base_speed  # <-- pull the value on ready
 
 func _physics_process(delta) -> void:
 	if agent.is_navigation_finished():
