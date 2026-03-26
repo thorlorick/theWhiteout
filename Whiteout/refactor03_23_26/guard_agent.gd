@@ -17,7 +17,6 @@ var world_state := WorldState.new()
 var goals       := GoalsComponent.new()
 var actions     := ActionsComponent.new()
 var speed       := SpeedComponent.new()
-var animation   := EnemyAnimationComponent.new()
 var attack      := AttackComponent.new()
 var reflex      := ReflexComponent.new()
 
@@ -41,7 +40,6 @@ var _last_damage_info: DamageInfo = null
 var _in_alert_range: bool = false
 var _in_danger_range: bool = false
 
-var animation_events: EnemyAnimationEvents
 
 # -----------------------------------------------------------------------------
 # READY
@@ -116,11 +114,8 @@ func _connect_reflex_signals() -> void:
 # ANIMATION SETUP
 # -----------------------------------------------------------------------------
 func _setup_animation() -> void:
-	var anim_tree = $EnemyAnimations/AnimationTree
-	animation.setup(anim_tree)
-	animation_events = $EnemyAnimations
-	animation_events.hit_frame_reached.connect(_on_attack_hit_frame)
-	animation_events.attack_animation_finished.connect(_on_attack_animation_finished)
+    var anim_tree = $AnimationTree
+    animation.setup(anim_tree)
 
 # -----------------------------------------------------------------------------
 # _on_best_chosen_action — planner has spoken, agent routes to components
