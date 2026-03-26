@@ -51,6 +51,7 @@ func _ready() -> void:
 		vision_component.apply_awareness(personality.awareness)
 
 	add_child(attack)
+	add_child(animation)
 
 	ai_move_component.set_speed(speed.get_speed())
 
