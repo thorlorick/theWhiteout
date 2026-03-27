@@ -33,6 +33,8 @@ var reflex      := ReflexComponent.new()
 @export var home_position:      Vector2
 @export var personality:        PersonalityResource
 @export var knockback_component: KnockbackComponent
+@export var animation_events: AnimationEvents
+
 
 var _current_goal_name: String = "Patrol"
 var _last_known_position:  Vector2 = Vector2.ZERO
@@ -73,6 +75,9 @@ func _ready() -> void:
 func _connect_signals() -> void:
 	ai_move_component.velocity_changed.connect(animation.update)
 	ai_move_component.velocity_changed.connect(vision_component.update_direction)
+	
+	animation_events.attack_hit_frame.connect(_on_attack_hit_frame)
+	animation_events.attack_animation_finished.connect(_on_attack_animation_finished)
 
 	health_component.hit.connect(_on_hit_received)
 	health_component.died.connect(_on_died)
@@ -87,7 +92,6 @@ func _connect_signals() -> void:
 	chase_component.target_lost.connect(_on_chase_target_lost)
 
 	hurtbox_component.hurt.connect(_on_hurtbox_hurt)
-	hitbox_component.hit_landed.connect(_on_hit_landed)
 
 	knockback_component.knockback_finished.connect(_on_knockback_finished)
 
@@ -108,6 +112,7 @@ func _connect_reflex_signals() -> void:
 	reflex.interrupt_movement_stopped.connect(_on_reflex_movement_stopped)
 	reflex.interrupt_speed_reset.connect(_on_reflex_speed_reset)
 	reflex.interrupt_run_started.connect(_on_reflex_run_started)
+	reflex.interrupt_attack_started.connect(_on_reflex_attack_started)
 	reflex.interrupt_attack_stopped.connect(_on_reflex_attack_stopped)
 	reflex.interrupt_hurt_started.connect(_on_reflex_hurt_started)
 	reflex.interrupt_death_started.connect(_on_reflex_death_started)
@@ -116,8 +121,8 @@ func _connect_reflex_signals() -> void:
 # ANIMATION SETUP
 # -----------------------------------------------------------------------------
 func _setup_animation() -> void:
-    var anim_tree = $AnimationTree
-    animation.setup(anim_tree)
+	var anim_tree = $AnimationTree
+	animation.setup(anim_tree)
 
 # -----------------------------------------------------------------------------
 # _on_best_chosen_action — planner has spoken, agent routes to components
@@ -240,11 +245,9 @@ func _on_gap_closed() -> void:
 # -----------------------------------------------------------------------------
 # DAMAGE FLOW (DECOUPLED)
 # -----------------------------------------------------------------------------
-func _on_hit_landed(damage_info: DamageInfo) -> void:
+func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
 	urge.on_hit_landed()
 	print(">>> GUARD: hit landed — aggression fed")
-
-func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
 	if damage_info.source != null:
 		damage_info.knockback_direction = (global_position - damage_info.source.global_position).normalized()
 	_last_damage_info = damage_info
@@ -264,6 +267,7 @@ func _on_attack_hit_frame() -> void:
 func _on_attack_animation_finished() -> void:
 	hitbox_component.deactivate()
 	attack.on_attack_finished()
+	animation.on_attack_finished()
 	print(">>> GUARD: attack animation finished")
 
 func _on_died() -> void:
@@ -332,6 +336,9 @@ func _on_reflex_speed_reset() -> void:
 func _on_reflex_run_started() -> void:
 	ai_move_component.set_speed(speed.get_run_speed())
 	ai_move_component.set_running(true)
+
+func _on_reflex_attack_started() -> void:
+	attack.try_attack()
 
 func _on_reflex_attack_stopped() -> void:
 	hitbox_component.deactivate()
