@@ -17,7 +17,7 @@ signal lost_target()
 signal alert_range(body)
 signal danger_range(body)
 signal range_lost(body)
-signal gap_closed_signal()
+signal gap_closed()
 
 # -----------------------------------------------------------------------------
 # EXPORTS
