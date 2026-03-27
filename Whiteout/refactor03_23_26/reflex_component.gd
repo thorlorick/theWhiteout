@@ -14,6 +14,7 @@ signal interrupt_search_stopped
 signal interrupt_speed_reset
 signal interrupt_run_started
 signal interrupt_chase_stopped
+signal interrupt_attack_started
 signal interrupt_attack_stopped
 signal interrupt_hurt_started
 signal interrupt_death_started
@@ -61,7 +62,7 @@ func on_chase_target_lost() -> void:
 func on_gap_closed() -> void:
 	print(">>> REFLEX: gap closed — interrupt chase, start attack")
 	interrupt_chase_stopped.emit()
-	interrupt_attack_stopped.emit()
+	interrupt_attack_started.emit()
 
 # -----------------------------------------------------------------------------
 # on_target_died — target eliminated, full stop
