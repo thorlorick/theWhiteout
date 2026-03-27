@@ -86,7 +86,7 @@ func _connect_signals() -> void:
 	vision_component.spotted_target.connect(_on_spotted_target)
 	vision_component.lost_target.connect(_on_vision_lost_target)
 	vision_component.danger_range.connect(_on_danger_range)
-	vision_component.gap_closed_signal.connect(_on_gap_closed)
+	vision_component.gap_closed.connect(_on_gap_closed)
 
 	chase_component.move_to.connect(_on_chase_move_to)
 	chase_component.target_lost.connect(_on_chase_target_lost)
