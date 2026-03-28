@@ -219,7 +219,7 @@ func _cast_rays(delta: float) -> void:
 		if _was_seeing_target and dist <= strike_distance and not _gap_closed:
 			_gap_closed = true
 			print(">>> VISION: gap closed — strike distance reached")
-			gap_closed_signal.emit()
+			gap_closed.emit()
 
 	else:
 		_detection_value = max(0.0, _detection_value - drain_rate * delta)
