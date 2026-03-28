@@ -220,7 +220,7 @@ func _on_spotted_target(target_body: Node2D) -> void:
 	world_state.set_state("sees_target", true)
 	world_state.set_state("known_target", target_body)
 
-	emit_signal("target_spotted", target_body)
+	emit_signal("target_spotted", target_body) # old style of signal calling -- needs fixing
 	urge.on_target_spotted()
 	reflex.on_target_spotted()
 	_replan()
