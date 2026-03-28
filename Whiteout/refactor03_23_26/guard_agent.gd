@@ -87,6 +87,7 @@ func _connect_signals() -> void:
 	vision_component.lost_target.connect(_on_vision_lost_target)
 	vision_component.danger_range.connect(_on_danger_range)
 	vision_component.gap_closed.connect(_on_gap_closed)
+	vision_component.alert_range.connect(_on_alert_range)
 
 	chase_component.move_to.connect(_on_chase_move_to)
 	chase_component.target_lost.connect(_on_chase_target_lost)
@@ -228,7 +229,8 @@ func _on_spotted_target(target_body: Node2D) -> void:
 func _on_vision_lost_target() -> void:
 	world_state.set_state("sees_target", false)
 	world_state.set_state("target_lost", true)
-
+	_in_alert_range = false
+	_in_danger_range = false
 	emit_signal("target_lost")
 	urge.on_target_lost()
 	reflex.on_target_lost()
@@ -236,6 +238,9 @@ func _on_vision_lost_target() -> void:
 func _on_danger_range(_target_body: Node2D) -> void:
 	_in_danger_range = true
 	reflex.on_danger_entered()
+
+func _on_alert_range(_body: Node2D) -> void:
+	_in_alert_range = true
 
 func _on_gap_closed() -> void:
 	world_state.set_state("gap_closed", true)
