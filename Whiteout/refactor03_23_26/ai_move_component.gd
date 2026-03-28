@@ -25,6 +25,9 @@ func _physics_process(delta) -> void:
 		return
 	var next_point = agent.get_next_path_position()
 	var direction  = (next_point - body.global_position).normalized()
+	if direction == Vector2.ZERO:
+    	velocity_changed.emit(Vector2.ZERO, false, false)
+    	return
 	body.velocity  = direction * speed
 	body.move_and_slide()
 	velocity_changed.emit(direction, true, is_running)
