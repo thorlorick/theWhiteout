@@ -75,9 +75,12 @@ func _ready() -> void:
 func _connect_signals() -> void:
 	ai_move_component.velocity_changed.connect(animation.update)
 	ai_move_component.velocity_changed.connect(vision_component.update_direction)
+	ai_move_component.velocity_changed.connect(attack.on_velocity_changed)
 	
 	animation_events.attack_hit_frame.connect(_on_attack_hit_frame)
 	animation_events.attack_animation_finished.connect(_on_attack_animation_finished)
+
+
 
 	health_component.hit.connect(_on_hit_received)
 	health_component.died.connect(_on_died)
