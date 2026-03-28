@@ -222,7 +222,7 @@ func _on_spotted_target(target_body: Node2D) -> void:
 	world_state.set_state("sees_target", true)
 	world_state.set_state("known_target", target_body)
 
-	emit_signal("target_spotted", target_body) # old style of signal calling -- needs fixing
+	target_spotted.emit(target_body) 
 	urge.on_target_spotted()
 	reflex.on_target_spotted()
 	_replan()
@@ -232,7 +232,7 @@ func _on_vision_lost_target() -> void:
 	world_state.set_state("target_lost", true)
 	_in_alert_range = false
 	_in_danger_range = false
-	emit_signal("target_lost")
+	target_lost.emit()
 	urge.on_target_lost()
 	reflex.on_target_lost()
 
