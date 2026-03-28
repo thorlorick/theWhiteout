@@ -1,5 +1,6 @@
 class_name AttackComponent
 extends Node
+
 # -----------------------------------------------------------------------------
 # AttackComponent
 # Triggers attacks based on current movement state.
@@ -8,17 +9,20 @@ extends Node
 # Animation player handles hitbox deactivation timing.
 # Attack type is set by the agent based on AIMoveComponent signals.
 # -----------------------------------------------------------------------------
+
 signal attack_triggered(damage_info: DamageInfo)
 signal attack_finished
 @export var personality: PersonalityResource
 var _can_attack: bool = true
 var _is_running: bool = false
 var _pending_damage_info: DamageInfo = null  # stored until hit frame
+
 # -----------------------------------------------------------------------------
 # set_running — called by agent when velocity_changed fires
 # -----------------------------------------------------------------------------
 func set_running(value: bool) -> void:
 	_is_running = value
+
 # -----------------------------------------------------------------------------
 # try_attack — build DamageInfo and signal the agent
 # -----------------------------------------------------------------------------
@@ -30,6 +34,7 @@ func try_attack() -> void:
 	var label = "run_attack" if _is_running else "walk_attack"
 	print(">>> ATTACK: %s triggered" % label)
 	attack_triggered.emit(_pending_damage_info)
+
 # -----------------------------------------------------------------------------
 # _build_damage_info — package up damage based on current movement state
 # -----------------------------------------------------------------------------
@@ -43,6 +48,7 @@ func _build_damage_info() -> DamageInfo:
 		amount = personality.walk_attack_damage
 		force  = personality.walk_attack_force
 	return DamageInfo.new().init(amount, Vector2.ZERO, force, owner)
+
 # -----------------------------------------------------------------------------
 # on_attack_finished — called by agent when animation signals done
 # -----------------------------------------------------------------------------
@@ -51,6 +57,7 @@ func on_attack_finished() -> void:
 	_pending_damage_info = null
 	print(">>> ATTACK: finished, ready")
 	attack_finished.emit()
+
 # -----------------------------------------------------------------------------
 # getters
 # -----------------------------------------------------------------------------
