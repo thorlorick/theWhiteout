@@ -302,6 +302,7 @@ func _on_arrived_home() -> void:
 	ai_move_component.stop()
 
 func _on_new_patrol_target(position: Vector2) -> void:
+	world_state.set_state("at_home", false)
 	ai_move_component.destination_reached.connect(patrol_component.arrived, CONNECT_ONE_SHOT)
 	ai_move_component.set_target(position)
 
