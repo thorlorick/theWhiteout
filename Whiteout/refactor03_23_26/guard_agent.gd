@@ -141,11 +141,16 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 			print(">>> ACTION: going home")
 			patrol_component.stop()
 			search_component.stop()
+			world_state.set_state("patrolling", false)
+			world_state.set_state("at_home",    false)
 			ai_move_component.destination_reached.connect(_on_arrived_home, CONNECT_ONE_SHOT)
 			ai_move_component.set_target(home_position)
 
 		"GoPatrol":
 			print(">>> ACTION: going on patrol")
+			world_state.set_state("at_home",    false)
+			world_state.set_state("patrolling", true)
+			urge.committed_to_patrol()
 			patrol_component.start()
 
 		"ChaseTarget":
@@ -154,6 +159,10 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 			if target != null and not chase_component.active:
 				patrol_component.stop()
 				search_component.stop()
+				world_state.set_state("patrolling",   false)
+				world_state.set_state("gap_closed",   false)
+				world_state.set_state("target_lost",  false)
+				world_state.set_state("target_found", true)
 				chase_component.start_chase(target)
 
 		"Attack":
@@ -163,6 +172,9 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 		"Search":
 			print(">>> ACTION: searching for lost target")
 			patrol_component.stop()
+			world_state.set_state("patrolling", false)
+			world_state.set_state("at_home",    false)
+			urge.committed_to_search()
 			search_component.start_search(_last_known_position, _last_known_direction)
 
 # -----------------------------------------------------------------------------
