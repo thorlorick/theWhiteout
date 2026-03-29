@@ -54,3 +54,6 @@ I also want/need to develop some more goals and actions for more advanced AI ene
 
 # March 25, 2026
 Refactor has been hell!!!!! The whole thing just completely shut down. I've spent the last two days rebuilding everything, so it's been a worthwhile experience. I've bulked up the vision a bit and added some debuggin to it so it's easier to see. I really need to get combat up and running.
+
+# March 29, 2026
+Shockingly, refactor just finished...it was awful...scratch that, I don't know if it's done, but I think I understand the code better now. There were signals being sent out to the void, urge systems completely abandoned...we really need to watch when the code switches that all the old code, the necessary code, get's put back. Thank god for the limited version system I have going on. Time for combat. This is goign to be tough. BUT after this, I think I'm close to level design.....which means playing with the AI more!!!!! -- what other actions can I give him!!!!!
