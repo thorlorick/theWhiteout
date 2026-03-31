@@ -27,7 +27,10 @@ var reflex      := ReflexComponent.new()
 @export var patrol_component:   PatrolComponent
 @export var search_component:   SearchComponent
 @export var health_component:   HealthComponent
-@export var hitbox_component:   HitboxComponent
+@export var hitbox_down:   HitboxComponent
+@export var hitbox_up:   HitboxComponent
+@export var hitbox_left:   HitboxComponent
+@export var hitbox_right:   HitboxComponent
 @export var hurtbox_component:  HurtboxComponent
 @export var nav_region:         NavigationRegion2D
 @export var home_position:      Vector2
@@ -42,6 +45,7 @@ var _last_known_direction: Vector2 = Vector2.ZERO
 var _last_damage_info: DamageInfo = null
 var _in_alert_range: bool = false
 var _in_danger_range: bool = false
+var _facing_direction: Vector2 = Vector2.DOWN
 
 
 # -----------------------------------------------------------------------------
@@ -76,6 +80,7 @@ func _connect_signals() -> void:
 	ai_move_component.velocity_changed.connect(animation.update)
 	ai_move_component.velocity_changed.connect(vision_component.update_direction)
 	ai_move_component.velocity_changed.connect(attack.on_velocity_changed)
+	ai_move_component.velocity_changed.connect(_on_velocity_changed)
 	
 	animation_events.attack_hit_frame.connect(_on_attack_hit_frame)
 	animation_events.attack_animation_finished.connect(_on_attack_animation_finished)
@@ -287,14 +292,26 @@ func _on_attack_triggered(damage_info: DamageInfo) -> void:
 	animation.play_attack(attack.is_running())
 
 func _on_attack_hit_frame() -> void:
-	print(">>> GUARD: hit frame reached")
-	hitbox_component.activate(attack.get_pending_damage_info())
+    var info = attack.get_pending_damage_info()
+    var hb = _get_directional_hitbox()
+    if hb == null:
+        return
+    hb.activate(info)
+    print(">>> GUARD: hit frame — direction %s" % _facing_direction)
+
+func _get_directional_hitbox() -> HitboxComponent:
+    if abs(_facing_direction.x) > abs(_facing_direction.y):
+        return hitbox_right if _facing_direction.x > 0 else hitbox_left
+    else:
+        return hitbox_down if _facing_direction.y > 0 else hitbox_up
 
 func _on_attack_animation_finished() -> void:
-	hitbox_component.deactivate()
-	attack.on_attack_finished()
-	animation.on_attack_finished()
-	print(">>> GUARD: attack animation finished")
+    var hb = _get_directional_hitbox()
+    if hb != null:
+        hb.deactivate()
+    attack.on_attack_finished()
+    animation.on_attack_finished()
+    print(">>> GUARD: attack animation finished")
 
 func _on_died() -> void:
 	print(">>> GUARD: died")
@@ -327,6 +344,10 @@ func _on_search_finished() -> void:
 
 func _on_chase_move_to(position: Vector2) -> void:
 	ai_move_component.set_target(position)
+
+func _on_velocity_changed(direction: Vector2, is_moving: bool, _is_running: bool) -> void:
+    if direction != Vector2.ZERO:
+        _facing_direction = direction
 
 func _on_chase_target_lost() -> void:
 	world_state.set_state("sees_target", false)
@@ -368,7 +389,9 @@ func _on_reflex_attack_started() -> void:
 	attack.try_attack()
 
 func _on_reflex_attack_stopped() -> void:
-	hitbox_component.deactivate()
+    var hb = _get_directional_hitbox()
+    if hb != null:
+        hb.deactivate()
 
 func _on_reflex_hurt_started() -> void:
 	hurtbox_component.set_invulnerable(true)
