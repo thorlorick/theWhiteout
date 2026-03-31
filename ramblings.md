@@ -57,3 +57,7 @@ Refactor has been hell!!!!! The whole thing just completely shut down. I've spen
 
 # March 29, 2026
 Shockingly, refactor just finished...it was awful...scratch that, I don't know if it's done, but I think I understand the code better now. There were signals being sent out to the void, urge systems completely abandoned...we really need to watch when the code switches that all the old code, the necessary code, get's put back. Thank god for the limited version system I have going on. Time for combat. This is goign to be tough. BUT after this, I think I'm close to level design.....which means playing with the AI more!!!!! -- what other actions can I give him!!!!!
+
+# March 30, 2026
+And somehow, just like that...player flew across the screen!!!! Honestly...it took WAY too long to figure out hit and hurtboxes...still not sure if I fully understand what's going on. BUT it works. and then we threw in some knockback for fun...oh man...just completely off the screen!! Too funny. So now, we are talking about poise...ahhahahah!!!!!
+Seriously though, we might do some sort of weight for the guards...another variable....possibly another urge. Self-esteem!!!! hahaha - a guard who loves his body might fight harder....ahhahahha. Never mind.
