@@ -2,13 +2,6 @@ class_name GuardAgent
 extends CharacterBody2D
 
 # -----------------------------------------------------------------------------
-# SIGNAL HUB (central decoupling point)
-# -----------------------------------------------------------------------------
-signal damage_received(damage_info: DamageInfo)
-signal target_spotted(target: Node2D)
-signal target_lost()
-
-# -----------------------------------------------------------------------------
 # COMPONENTS
 # -----------------------------------------------------------------------------
 var urge        := UrgeComponent.new()
@@ -203,7 +196,7 @@ func _process(delta: float) -> void:
 	_replan()
 
 # -----------------------------------------------------------------------------
-# DERIVED STATE (acceptable for now)
+# DERIVED STATE (acceptable for now) --- DOESN'T LIVE HERE
 # -----------------------------------------------------------------------------
 func _get_guard_state() -> String:
 	if world_state.get_state("sees_target"):
@@ -312,6 +305,7 @@ func _on_attack_animation_finished() -> void:
 		hb.deactivate()
 	attack.on_attack_finished()
 	print(">>> GUARD: attack animation finished")
+	_replan()
 
 func _on_died() -> void:
 	print(">>> GUARD: died")
@@ -358,11 +352,6 @@ func _on_chase_target_lost() -> void:
 # REFLEX HANDLERS (still routing, allowed)
 # -----------------------------------------------------------------------------
 func _on_reflex_chase_started() -> void:
-	var target = world_state.get_state("known_target")
-	if target == null or chase_component.active:
-		return
-	_clear_pending_arrivals()
-	_current_goal_name = "Chase"
 	chase_component.start_chase(target)
 
 func _on_reflex_chase_stopped() -> void:
