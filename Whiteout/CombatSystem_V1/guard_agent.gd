@@ -311,7 +311,6 @@ func _on_attack_animation_finished() -> void:
 	if hb != null:
 		hb.deactivate()
 	attack.on_attack_finished()
-	animation.on_attack_finished()
 	print(">>> GUARD: attack animation finished")
 
 func _on_died() -> void:
