@@ -245,7 +245,7 @@ func _on_vision_lost_target() -> void:
 	world_state.set_state("target_lost", true)
 	_in_alert_range = false
 	_in_danger_range = false
-	target_lost.emit()
+	vision.on_target_lost()
 	urge.on_target_lost()
 	reflex.on_target_lost()
 
