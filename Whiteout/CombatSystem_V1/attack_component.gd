@@ -61,7 +61,7 @@ func on_attack_finished() -> void:
 	_can_attack = true
 	_pending_damage_info = null
 	print(">>> ATTACK: finished, ready")
-	attack_finished.emit()
+	
 
 # -----------------------------------------------------------------------------
 # getters
