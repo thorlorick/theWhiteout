@@ -269,7 +269,7 @@ func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
 	if damage_info.source != null:
 		damage_info.knockback_direction = (global_position - damage_info.source.global_position).normalized()
 	_last_damage_info = damage_info
-	damage_received.emit(damage_info)
+	health.take_damage(damage_info)
 
 func _on_hit_received(damage_info: DamageInfo) -> void:
 	print(">>> GUARD: took %.1f damage" % damage_info.amount)
