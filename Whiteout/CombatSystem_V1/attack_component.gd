@@ -55,7 +55,7 @@ func _build_damage_info() -> DamageInfo:
 	return DamageInfo.new().init(amount, Vector2.ZERO, force, null)
 
 # -----------------------------------------------------------------------------
-# on_attack_finished — called by agent when animation signals done
+# on_attack_finished — let agent know the attack is done.
 # -----------------------------------------------------------------------------
 func on_attack_finished() -> void:
 	_can_attack = true
