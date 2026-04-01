@@ -243,8 +243,6 @@ func _on_spotted_target(target_body: Node2D) -> void:
 func _on_vision_lost_target() -> void:
 	world_state.set_state("sees_target", false)
 	world_state.set_state("target_lost", true)
-	_in_alert_range = false
-	_in_danger_range = false
 	vision.on_target_lost()
 	urge.on_target_lost()
 	reflex.on_target_lost()
