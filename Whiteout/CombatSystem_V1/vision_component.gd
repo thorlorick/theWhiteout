@@ -253,6 +253,16 @@ func on_target_lost() -> void:
     _in_alert_range = false
     _in_danger_range = false
 
+func on_danger_entered() -> void:
+    _in_danger_range = true
+
+func on_alert_entered() -> void:
+    _in_alert_range = true
+
+func on_range_lost() -> void:
+    _in_alert_range = false
+    _in_danger_range = false
+
 # -----------------------------------------------------------------------------
 # clear_target
 # -----------------------------------------------------------------------------
