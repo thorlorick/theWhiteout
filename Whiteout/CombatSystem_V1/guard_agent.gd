@@ -231,33 +231,29 @@ func _replan() -> void:
 func _on_spotted_target(target_body: Node2D) -> void:
 	if world_state.get_state("sees_target"):
 		return
-
 	world_state.set_state("sees_target", true)
 	world_state.set_state("known_target", target_body)
-
-	target_spotted.emit(target_body) 
 	urge.on_target_spotted()
 	reflex.on_target_spotted()
 	_replan()
 
 func _on_vision_lost_target() -> void:
-	world_state.set_state("sees_target", false)
-	world_state.set_state("target_lost", true)
-	vision.on_target_lost()
-	urge.on_target_lost()
-	reflex.on_target_lost()
+    world_state.set_state("sees_target", false)
+    world_state.set_state("target_lost", true)
+    vision.on_target_lost()
+    urge.on_target_lost()
+    reflex.on_target_lost()
 
 func _on_danger_range(_target_body: Node2D) -> void:
-	_in_danger_range = true
-	reflex.on_danger_entered()
+    vision.on_danger_entered()
+    reflex.on_danger_entered()
 
 func _on_alert_range(_body: Node2D) -> void:
-	_in_alert_range = true
+    vision.on_alert_entered()
 
 func _on_range_lost(_body: Node2D) -> void:
-	_in_alert_range = false
-	_in_danger_range = false
-	_replan()
+    vision.on_range_lost()
+    _replan()
 
 func _on_gap_closed() -> void:
 	world_state.set_state("gap_closed", true)
