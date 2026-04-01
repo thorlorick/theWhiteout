@@ -58,9 +58,3 @@ func play_attack(is_running: bool) -> void:
 	else:
 		state_machine.travel("walk_attack")
 
-# -----------------------------------------------------------------------------
-# Called from AnimationPlayer (end of attack animation)
-# -----------------------------------------------------------------------------
-
-func on_attack_finished() -> void:
-	is_attacking = false
