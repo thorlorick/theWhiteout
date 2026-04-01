@@ -246,6 +246,14 @@ func _cast_rays(delta: float) -> void:
 			_last_seen_body = null
 
 # -----------------------------------------------------------------------------
+# dealing with lost targets
+# -----------------------------------------------------------------------------
+func on_target_lost() -> void:
+    _gap_closed = false
+    _in_alert_range = false
+    _in_danger_range = false
+
+# -----------------------------------------------------------------------------
 # clear_target
 # -----------------------------------------------------------------------------
 func clear_target() -> void:
