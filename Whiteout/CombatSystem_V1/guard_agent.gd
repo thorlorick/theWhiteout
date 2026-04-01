@@ -82,7 +82,7 @@ func _connect_signals() -> void:
 
 	health_component.hit.connect(_on_hit_received)
 	health_component.died.connect(_on_died)
-	damage_received.connect(health_component.take_damage)
+	# damage_received.connect(health_component.take_damage)
 
 	vision_component.spotted_target.connect(_on_spotted_target)
 	vision_component.lost_target.connect(_on_vision_lost_target)
@@ -238,22 +238,22 @@ func _on_spotted_target(target_body: Node2D) -> void:
 	_replan()
 
 func _on_vision_lost_target() -> void:
-    world_state.set_state("sees_target", false)
-    world_state.set_state("target_lost", true)
-    vision.on_target_lost()
-    urge.on_target_lost()
-    reflex.on_target_lost()
+	world_state.set_state("sees_target", false)
+	world_state.set_state("target_lost", true)
+	vision_component.on_target_lost()
+	urge.on_target_lost()
+	reflex.on_target_lost()
 
 func _on_danger_range(_target_body: Node2D) -> void:
-    vision.on_danger_entered()
-    reflex.on_danger_entered()
+	vision_component.on_danger_entered()
+	reflex.on_danger_entered()
 
 func _on_alert_range(_body: Node2D) -> void:
-    vision.on_alert_entered()
+	vision_component.on_alert_entered()
 
 func _on_range_lost(_body: Node2D) -> void:
-    vision.on_range_lost()
-    _replan()
+	vision_component.on_range_lost()
+	_replan()
 
 func _on_gap_closed() -> void:
 	world_state.set_state("gap_closed", true)
@@ -269,7 +269,7 @@ func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
 	if damage_info.source != null:
 		damage_info.knockback_direction = (global_position - damage_info.source.global_position).normalized()
 	_last_damage_info = damage_info
-	health.take_damage(damage_info)
+	health_component.take_damage(damage_info)
 
 func _on_hit_received(damage_info: DamageInfo) -> void:
 	print(">>> GUARD: took %.1f damage" % damage_info.amount)
@@ -346,7 +346,9 @@ func _on_chase_target_lost() -> void:
 # REFLEX HANDLERS (still routing, allowed)
 # -----------------------------------------------------------------------------
 func _on_reflex_chase_started() -> void:
-	chase_component.start_chase(target)
+	var target = world_state.get_state("known_target")
+	if target != null:
+		chase_component.start_chase(target)
 
 func _on_reflex_chase_stopped() -> void:
 	chase_component.stop_chase()
