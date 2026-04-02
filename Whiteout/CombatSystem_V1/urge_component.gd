@@ -74,7 +74,6 @@ func apply_personality(p: PersonalityResource) -> void:
 
 # -----------------------------------------------------------------------------
 # tick — called every frame by GuardAgent
-# FIX: added "alert" state so urges don't silently freeze during alert phase
 # -----------------------------------------------------------------------------
 func tick(delta: float, state: String) -> void:
 	match state:
@@ -88,12 +87,6 @@ func tick(delta: float, state: String) -> void:
 			duty_urge       = _decay_toward(duty_urge, DUTY_URGE_REST, duty_decay_rate, delta)
 			curiosity_urge  = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, curiosity_decay_rate, delta)
 			aggression_urge = _decay_toward(aggression_urge, AGGRESSION_URGE_REST, aggression_decay_rate, delta)
-		"alert":
-			# something feels wrong — comfort slowly climbs, other urges hold steady
-			comfort_urge    = min(1.0, comfort_urge + alert_zone_boost * delta)
-			duty_urge       = _decay_toward(duty_urge, DUTY_URGE_REST, duty_decay_rate, delta)
-			curiosity_urge  = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, curiosity_decay_rate * 0.5, delta)
-			aggression_urge = _decay_toward(aggression_urge, AGGRESSION_URGE_REST, aggression_decay_rate * 0.5, delta)
 		"chasing":
 			comfort_urge    = _decay_toward(comfort_urge, COMFORT_URGE_REST, comfort_decay_rate, delta)
 			duty_urge       = _decay_toward(duty_urge, DUTY_URGE_REST, duty_decay_rate, delta)
@@ -119,7 +112,6 @@ func tick(delta: float, state: String) -> void:
 # -----------------------------------------------------------------------------
 # on_alert_tick — called every frame by GuardAgent while in alert range
 # slow comfort build — something feels off but nothing confirmed yet
-# NOTE: kept for compatibility but tick() now handles "alert" state directly
 # -----------------------------------------------------------------------------
 func on_alert_tick(delta: float) -> void:
 	comfort_urge = min(1.0, comfort_urge + alert_zone_boost * delta)
@@ -154,15 +146,13 @@ func on_hit_landed() -> void:
 	print(">>> URGE: hit landed — aggression bonus")
 
 # -----------------------------------------------------------------------------
-# on_hit_received — took a hit, emotional response shaped by current aggression
-# FIX: the current aggression level now shapes which way the guard goes.
-# A scared guard gets scareder. An angry guard gets angrier.
-# Both spikes no longer fire at full force simultaneously.
+# on_hit_received — took a hit, emotional wave follows the body reaction
+# low aggression: comfort spikes hard, wants to flee
+# high aggression: aggression spikes, wants to fight back
 # -----------------------------------------------------------------------------
 func on_hit_received() -> void:
-	var aggression_ratio = aggression_urge  # current state influences response
-	comfort_urge    = min(1.0, comfort_urge    + hit_received_comfort_spike    * (1.0 - aggression_ratio))
-	aggression_urge = min(1.0, aggression_urge + hit_received_aggression_spike * aggression_ratio)
+	comfort_urge    = min(1.0, comfort_urge + hit_received_comfort_spike)
+	aggression_urge = min(1.0, aggression_urge + hit_received_aggression_spike)
 	print(">>> URGE: hit received — comfort: %.2f | aggression: %.2f" % [comfort_urge, aggression_urge])
 
 # -----------------------------------------------------------------------------
@@ -170,16 +160,14 @@ func on_hit_received() -> void:
 # -----------------------------------------------------------------------------
 func committed_to_patrol() -> void:
 	comfort_urge = COMFORT_URGE_REST
-	duty_urge = min(1.0, duty_urge + 0.3)
+	duty_urge = min(1.0, duty_urge + 0.3) 
 	print(">>> URGE: committed to patrol — comfort reset, duty boosted")
 
 # -----------------------------------------------------------------------------
-# committed_to_search — curiosity committed
-# FIX: no longer double-spikes. on_target_lost() already fired curiosity_spike.
-# This just ensures commitment is registered without stacking.
+# committed_to_search — curiosity committed, reset other urges slightly
 # -----------------------------------------------------------------------------
 func committed_to_search() -> void:
-	curiosity_urge = min(1.0, curiosity_urge + 0.2)
+	curiosity_urge = min(1.0, curiosity_urge + 0.8)  # spike curiosity
 	print(">>> URGE: committed to search")
 
 # -----------------------------------------------------------------------------
