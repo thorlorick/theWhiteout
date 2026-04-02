@@ -35,6 +35,7 @@ var reflex      := ReflexComponent.new()
 @export var knockback_component: KnockbackComponent
 @export var animation_events: AnimationEvents
 
+
 var _current_goal_name: String = "Patrol"
 var _last_known_position:  Vector2 = Vector2.ZERO
 var _last_known_direction: Vector2 = Vector2.ZERO
@@ -42,12 +43,6 @@ var _last_damage_info: DamageInfo = null
 var _in_alert_range: bool = false
 var _in_danger_range: bool = false
 
-# -----------------------------------------------------------------------------
-# FIX: commitment lock — prevents replanning while an action is mid-execution.
-# Combat actions (Attack) set this. It clears when the action resolves.
-# Reflexes can still interrupt regardless of this flag.
-# -----------------------------------------------------------------------------
-var _action_committed: bool = false
 
 # -----------------------------------------------------------------------------
 # READY
@@ -81,9 +76,11 @@ func _connect_signals() -> void:
 	ai_move_component.velocity_changed.connect(animation.update)
 	ai_move_component.velocity_changed.connect(vision_component.update_direction)
 	ai_move_component.velocity_changed.connect(attack.on_velocity_changed)
-
+	
 	animation_events.attack_hit_frame.connect(_on_attack_hit_frame)
 	animation_events.attack_animation_finished.connect(_on_attack_animation_finished)
+
+
 
 	health_component.hit.connect(_on_hit_received)
 	health_component.died.connect(_on_died)
@@ -169,11 +166,7 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 				chase_component.start_chase(target)
 
 		"Attack":
-			# FIX: lock commitment so the planner won't re-evaluate mid-swing.
-			# The lock is cleared in _on_attack_animation_finished().
-			# Reflexes bypass this lock entirely — they interrupt regardless.
 			print(">>> ACTION: attacking TARGET")
-			_action_committed = true
 			attack.try_attack()
 
 		"Search":
@@ -205,57 +198,29 @@ func _process(delta: float) -> void:
 	_replan()
 
 # -----------------------------------------------------------------------------
-# DERIVED STATE
-# FIX: added "alert" state so _get_guard_state() never returns an unhandled
-#      string. Previously _in_alert_range had no matching tick() case, causing
-#      all four urges to silently freeze every alert frame.
-# FIX: gap_closed is only trusted when sees_target is also true.
-#      Previously a stale gap_closed from a prior encounter could cause the
-#      guard to immediately enter "attacking" state on the next target sighting
-#      before a chase even started.
+# DERIVED STATE (acceptable for now)
 # -----------------------------------------------------------------------------
 func _get_guard_state() -> String:
 	if world_state.get_state("sees_target"):
-		if world_state.get_state("gap_closed"):
-			return "attacking"
-		return "chasing"
+		return "attacking" if world_state.get_state("gap_closed") else "chasing"
 	if world_state.get_state("target_lost"):
 		return "searching"
-	if _in_alert_range:
-		return "alert"
 	if world_state.get_state("at_home"):
 		return "at_home"
 	return "patrolling"
 
 # -----------------------------------------------------------------------------
 # REPLAN → EMITS INTENT ONLY
-# FIX: now tracks both goal AND action changes.
-#      Previously only goal changes triggered _on_best_chosen_action().
-#      This meant the guard could stay on the correct goal (e.g. "Defeat Enemy")
-#      but never transition actions (e.g. ChaseTarget → Attack) because the
-#      goal name never changed.
-# FIX: _action_committed lock blocks replanning mid-execution.
-#      Combat actions set this flag. It clears when the action resolves.
 # -----------------------------------------------------------------------------
 func _replan() -> void:
-	# don't interrupt a committed action — let it finish
-	if _action_committed:
-		return
-
 	var best_goal = planner.get_best_goal(goals.goals, _current_goal_name)
 	if planner.is_goal_satisfied(best_goal, world_state):
 		return
-
 	var best_action = planner.get_best_action(best_goal, actions.actions, world_state)
 	if best_action.is_empty():
 		return
-
-	var goal_changed   = best_goal["name"]   != _current_goal_name
-	var action_changed = best_action["name"] != planner.current_action_name
-
-	if goal_changed or action_changed:
-		_current_goal_name          = best_goal["name"]
-		planner.current_action_name = best_action["name"]
+	if best_goal["name"] != _current_goal_name:
+		_current_goal_name = best_goal["name"]
 		print(">>> REPLAN — goal: %s | action: %s" % [
 			best_goal["name"],
 			best_action["name"]
@@ -272,7 +237,7 @@ func _on_spotted_target(target_body: Node2D) -> void:
 	world_state.set_state("sees_target", true)
 	world_state.set_state("known_target", target_body)
 
-	target_spotted.emit(target_body)
+	target_spotted.emit(target_body) 
 	urge.on_target_spotted()
 	reflex.on_target_spotted()
 	_replan()
@@ -280,10 +245,7 @@ func _on_spotted_target(target_body: Node2D) -> void:
 func _on_vision_lost_target() -> void:
 	world_state.set_state("sees_target", false)
 	world_state.set_state("target_lost", true)
-	# FIX: clear gap_closed when target is lost so it doesn't persist
-	# into the next encounter and cause an immediate "attacking" state
-	world_state.set_state("gap_closed", false)
-	_in_alert_range  = false
+	_in_alert_range = false
 	_in_danger_range = false
 	target_lost.emit()
 	urge.on_target_lost()
@@ -297,7 +259,7 @@ func _on_alert_range(_body: Node2D) -> void:
 	_in_alert_range = true
 
 func _on_range_lost(_body: Node2D) -> void:
-	_in_alert_range  = false
+	_in_alert_range = false
 	_in_danger_range = false
 	_replan()
 
@@ -329,15 +291,10 @@ func _on_attack_hit_frame() -> void:
 	hitbox_component.activate(attack.get_pending_damage_info())
 
 func _on_attack_animation_finished() -> void:
-	# FIX: clear the commitment lock here so the planner can evaluate again.
-	# The attack has fully resolved — animation, hitbox, everything.
-	_action_committed = false
 	hitbox_component.deactivate()
 	attack.on_attack_finished()
 	animation.on_attack_finished()
-	print(">>> GUARD: attack animation finished — commitment released")
-	# trigger a fresh replan now that the attack is done
-	_replan()
+	print(">>> GUARD: attack animation finished")
 
 func _on_died() -> void:
 	print(">>> GUARD: died")
@@ -350,11 +307,9 @@ func _on_arrived_home() -> void:
 	print(">>> ARRIVED HOME")
 	world_state.set_state("at_home",      true)
 	world_state.set_state("patrolling",   false)
-	# FIX: do not set target_found true on arriving home — there is no target.
-	# Previously this was setting target_found: true unconditionally which
-	# could confuse goal evaluation into thinking a target was present.
 	world_state.set_state("gap_closed",   false)
 	world_state.set_state("target_lost",  false)
+	world_state.set_state("target_found", true)
 	search_component.stop()
 	ai_move_component.stop()
 
@@ -375,28 +330,18 @@ func _on_chase_move_to(position: Vector2) -> void:
 
 func _on_chase_target_lost() -> void:
 	world_state.set_state("sees_target", false)
-	world_state.set_state("gap_closed",  false)
+	world_state.set_state("gap_closed", false)
 	reflex.on_chase_target_lost()
 
 # -----------------------------------------------------------------------------
-# REFLEX HANDLERS
-# Reflexes bypass _action_committed — they are interrupts, not plans.
-# FIX: _on_reflex_attack_started no longer calls attack.try_attack() directly.
-#      The planner owns attack decisions. The reflex system owns interrupts
-#      (hurt, death, knockback). Calling try_attack() from both paths was
-#      causing double-triggers on the same frame.
-#      If your ReflexComponent needs to force an attack for a specific reason
-#      (e.g. a counter-attack reflex), re-enable this and add a guard in
-#      attack.try_attack() to reject if already in progress.
+# REFLEX HANDLERS (still routing, allowed)
 # -----------------------------------------------------------------------------
 func _on_reflex_chase_started() -> void:
 	var target = world_state.get_state("known_target")
 	if target == null or chase_component.active:
 		return
 	_clear_pending_arrivals()
-	_action_committed  = false
 	_current_goal_name = "Chase"
-	planner.current_action_name = "ChaseTarget"
 	chase_component.start_chase(target)
 
 func _on_reflex_chase_stopped() -> void:
@@ -420,21 +365,12 @@ func _on_reflex_run_started() -> void:
 	ai_move_component.set_running(true)
 
 func _on_reflex_attack_started() -> void:
-	# FIX: removed direct attack.try_attack() call here.
-	# The planner selects Attack as an action. If a reflex genuinely needs
-	# to force an attack (counter-attack, parry window, etc.) uncomment below
-	# and make sure attack.try_attack() is re-entrant safe.
-	# attack.try_attack()
-	pass
+	attack.try_attack()
 
 func _on_reflex_attack_stopped() -> void:
 	hitbox_component.deactivate()
-	# FIX: also clear commitment if a reflex forcibly stops the attack
-	_action_committed = false
 
 func _on_reflex_hurt_started() -> void:
-	# Hurt interrupt — bypasses commitment lock
-	_action_committed = false
 	hurtbox_component.set_invulnerable(true)
 	animation.play_hurt()
 	urge.on_hit_received()
@@ -442,7 +378,6 @@ func _on_reflex_hurt_started() -> void:
 		knockback_component.apply(_last_damage_info.knockback_direction, _last_damage_info.knockback_force)
 
 func _on_reflex_death_started() -> void:
-	_action_committed = false
 	animation.play_death()
 	ai_move_component.stop()
 	set_process(false)
