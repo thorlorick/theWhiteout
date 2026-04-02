@@ -61,3 +61,6 @@ Shockingly, refactor just finished...it was awful...scratch that, I don't know i
 # March 30, 2026
 And somehow, just like that...player flew across the screen!!!! Honestly...it took WAY too long to figure out hit and hurtboxes...still not sure if I fully understand what's going on. BUT it works. and then we threw in some knockback for fun...oh man...just completely off the screen!! Too funny. So now, we are talking about poise...ahhahahah!!!!!
 Seriously though, we might do some sort of weight for the guards...another variable....possibly another urge. Self-esteem!!!! hahaha - a guard who loves his body might fight harder....ahhahahha. Never mind.
+
+# April 2, 2026
+As if by some sort of cosmic joke (yes, I see the date!!) the whole system is broken. I don't think it's from the refactor, but rather from trying to jam a bunch of components together and then praying they will work...they didn't work!!! So, it's back to the drawing board, but with way better drawings!! I'm going to add a few more actions and really flesh out the urge and goal system to try to make the AI solid. There needs to some reflex interrupts, and I've even considering a full combat system to over-ride everything..but I'm not sure about that one. For now. we have to get the urge and actions working...then combat. Once more into the breach...
