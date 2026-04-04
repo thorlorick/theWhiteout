@@ -1,7 +1,6 @@
 class_name UrgeComponent
 
 # -----------------------------------------------------------------------------
-# UrgeComponent
 # Four independent drives that build and decay on their own schedules.
 # Comfort, duty, curiosity, and aggression.
 # This component only measures. It never decides. The planner decides.
