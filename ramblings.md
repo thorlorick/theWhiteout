@@ -64,3 +64,6 @@ Seriously though, we might do some sort of weight for the guards...another varia
 
 # April 2, 2026
 As if by some sort of cosmic joke (yes, I see the date!!) the whole system is broken. I don't think it's from the refactor, but rather from trying to jam a bunch of components together and then praying they will work...they didn't work!!! So, it's back to the drawing board, but with way better drawings!! I'm going to add a few more actions and really flesh out the urge and goal system to try to make the AI solid. There needs to some reflex interrupts, and I've even considering a full combat system to over-ride everything..but I'm not sure about that one. For now. we have to get the urge and actions working...then combat. Once more into the breach...
+
+# April 3, 2026 
+We had a good session and completely reworked the urges and the goals to add some more variety. Not everything is wired up yet, but there is definitely better behaviour now. I have to fix vision, and combat is still a mess. At some point we have to dive deep into the animation player and start wiring in sounds and effects...no clue about that side of things yet. Get the AI build, get the starting room built, build out from there. That's the plan.
