@@ -20,10 +20,7 @@ var reflex      := ReflexComponent.new()
 @export var patrol_component:   PatrolComponent
 @export var search_component:   SearchComponent
 @export var health_component:   HealthComponent
-@export var hitbox_down:        HitboxComponent
-@export var hitbox_up:          HitboxComponent
-@export var hitbox_left:        HitboxComponent
-@export var hitbox_right:       HitboxComponent
+@export var hitbox_component:   HitboxComponent
 @export var hurtbox_component:  HurtboxComponent
 @export var nav_region:         NavigationRegion2D
 @export var home_position:      Vector2
@@ -41,6 +38,7 @@ var _last_damage_info:     DamageInfo = null
 var _in_alert_range:       bool    = false
 var _in_danger_range:      bool    = false
 var _facing_direction:     Vector2 = Vector2.DOWN
+var _hold_ground_timer: float = 0.0
 
 # replan timer — urges decide in quiet moments, events decide in loud ones
 const REPLAN_INTERVAL: float = 1.5
@@ -90,12 +88,12 @@ func _connect_signals() -> void:
 	health_component.died.connect(_on_died)
 
 	vision_component.spotted_target.connect(_on_spotted_target)
-	vision_component.lost_target.connect(_on_vision_lost_target)
 	vision_component.danger_range.connect(_on_danger_range)
 	vision_component.gap_closed.connect(_on_gap_closed)
 	vision_component.alert_range.connect(_on_alert_range)
-	vision_component.range_lost.connect(_on_range_lost)
 	vision_component.gap_opened.connect(_on_gap_opened)
+	vision_component.confirmed_target_lost.connect(_on_confirmed_target_lost)
+	vision_component.partial_sighting_lost.connect(_on_partial_sighting_lost)
 
 	chase_component.move_to.connect(_on_chase_move_to)
 	chase_component.target_lost.connect(_on_chase_target_lost)
@@ -152,10 +150,16 @@ func _process(delta: float) -> void:
 		urge.get_aggression_urge()
 	)
 
-	# quiet drift — urges decide without needing a lion
+	if _hold_ground_timer > 0.0:
+		_hold_ground_timer -= delta
+		if _hold_ground_timer <= 0.0:
+			_hold_ground_timer = 0.0
+			_replan()
+
 	_replan_timer -= delta
 	if _replan_timer <= 0.0:
 		_replan_timer = REPLAN_INTERVAL
+		print(">>> TIMER: firing replan")
 		_replan()
 
 # -----------------------------------------------------------------------------
@@ -171,7 +175,7 @@ func _get_urge_state() -> String:
 	if world_state.get_state("threat_nearby"):
 		return "threatened"
 	if world_state.get_state("target_lost"):
-		return "hunting"
+		return "working"
 	if world_state.get_state("at_home"):
 		return "safe"
 	return "working"
@@ -187,6 +191,8 @@ func _replan() -> void:
 	var best_action = planner.get_best_action(best_goal, actions.actions, world_state)
 	if best_action.is_empty():
 		return
+	if best_action["name"] == planner.current_action_name and best_goal["name"] == _current_goal_name:
+		return  # already doing the best thing
 	_current_goal_name = best_goal["name"]
 	planner.current_action_name = best_action["name"]
 	print(">>> REPLAN — goal: %s | action: %s" % [best_goal["name"], best_action["name"]])
@@ -233,6 +239,7 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 			print(">>> ACTION: starting patrol")
 			world_state.set_state("at_home", false)
 			world_state.set_state("working", true)
+			world_state.set_state("is_safe", false)
 			urge.committed_to_work()
 			patrol_component.start()
 
@@ -240,6 +247,7 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 			print(">>> ACTION: standing guard")
 			patrol_component.stop()
 			world_state.set_state("working", true)
+			world_state.set_state("is_safe", false)
 			urge.committed_to_work()
 			ai_move_component.stop()
 
@@ -283,6 +291,7 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 			patrol_component.stop()
 			ai_move_component.stop()
 			world_state.set_state("threat_nearby", true)
+			_hold_ground_timer = randf_range(0.0, 3.0)
 
 		"Search":
 			print(">>> ACTION: searching for lost target")
@@ -309,14 +318,21 @@ func _on_spotted_target(target_body: Node2D) -> void:
 	reflex.on_target_spotted()
 	_replan()
 
-func _on_vision_lost_target() -> void:
+func _on_confirmed_target_lost() -> void:
 	_last_known_position  = world_state.get_state("known_target").global_position if world_state.get_state("known_target") != null else _last_known_position
-	world_state.set_state("sees_target",    false)
-	world_state.set_state("target_lost",    true)
-	world_state.set_state("unknown_resolved",false)
+	world_state.set_state("sees_target",      false)
+	world_state.set_state("threat_nearby", false)
+	world_state.set_state("gap_closed",       false)
+	world_state.set_state("target_lost",      true)
+	world_state.set_state("unknown_resolved", false)
+	world_state.set_state("is_safe",          false)
 	vision_component.on_target_lost()
 	urge.on_target_lost()
 	reflex.on_target_lost()
+	print(">>> AGENT: target_lost=%s | unknown_resolved=%s" % [
+	world_state.get_state("target_lost"),
+	world_state.get_state("unknown_resolved")
+])
 	_replan()
 
 func _on_danger_range(_target_body: Node2D) -> void:
@@ -330,13 +346,11 @@ func _on_alert_range(_body: Node2D) -> void:
 	_in_alert_range = true
 	vision_component.on_alert_entered()
 
-func _on_range_lost(_body: Node2D) -> void:
+func _on_partial_sighting_lost() -> void:
 	_in_alert_range  = false
 	_in_danger_range = false
 	world_state.set_state("threat_nearby",  false)
 	world_state.set_state("danger_cleared", true)
-	vision_component.on_range_lost()
-	_replan()
 
 func _on_gap_closed() -> void:
 	world_state.set_state("gap_closed", true)
@@ -373,22 +387,11 @@ func _on_attack_triggered(damage_info: DamageInfo) -> void:
 func _on_attack_hit_frame() -> void:
 	var info = attack.get_pending_damage_info()
 	info.source = self
-	var hb = _get_directional_hitbox()
-	if hb == null:
-		return
-	hb.activate(info)
-	print(">>> GUARD: hit frame — direction %s" % _facing_direction)
-
-func _get_directional_hitbox() -> HitboxComponent:
-	if abs(_facing_direction.x) > abs(_facing_direction.y):
-		return hitbox_right if _facing_direction.x > 0 else hitbox_left
-	else:
-		return hitbox_down if _facing_direction.y > 0 else hitbox_up
+	hitbox_component.activate(info)
+	print(">>> GUARD: hit frame")
 
 func _on_attack_animation_finished() -> void:
-	var hb = _get_directional_hitbox()
-	if hb != null:
-		hb.deactivate()
+	hitbox_component.deactivate()
 	attack.on_attack_finished()
 	animation.on_attack_finished()
 	print(">>> GUARD: attack animation finished")
@@ -473,9 +476,7 @@ func _on_reflex_attack_started() -> void:
 	attack.try_attack()
 
 func _on_reflex_attack_stopped() -> void:
-	var hb = _get_directional_hitbox()
-	if hb != null:
-		hb.deactivate()
+	hitbox_component.deactivate()
 
 func _on_reflex_hurt_started() -> void:
 	hurtbox_component.set_invulnerable(true)
