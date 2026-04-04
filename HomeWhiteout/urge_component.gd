@@ -87,11 +87,11 @@ func tick(delta: float, state: String) -> void:
 
 		"safe":
 			# cup of tea. comfortable but duty is nagging quietly.
-			comfort_urge    = min(1.0, comfort_urge + comfort_build_rate * delta)
-			duty_urge       = min(1.0, duty_urge    + duty_build_rate    * delta)
-			curiosity_urge  = _decay_toward(curiosity_urge,  CURIOSITY_URGE_REST,  curiosity_decay_rate,  delta)
+			comfort_urge    = _decay_toward(comfort_urge, COMFORT_URGE_REST, comfort_build_rate * 0.5, delta)
+			duty_urge       = min(1.0, duty_urge + duty_build_rate * delta)
+			curiosity_urge  = _decay_toward(curiosity_urge, CURIOSITY_URGE_REST, curiosity_decay_rate, delta)
 			aggression_urge = _decay_toward(aggression_urge, AGGRESSION_URGE_REST, aggression_decay_rate, delta)
-
+		
 		"working":
 			# out and about. doing the job but misses home.
 			comfort_urge    = min(1.0, comfort_urge   + comfort_build_rate   * delta)
@@ -146,8 +146,9 @@ func on_target_spotted() -> void:
 # on_target_lost — lost visual, curiosity spikes to drive search
 # -----------------------------------------------------------------------------
 func on_target_lost() -> void:
-	curiosity_urge = min(1.0, curiosity_urge + curiosity_spike)
-	print(">>> URGE: target lost — curiosity spiked")
+	curiosity_urge  = min(1.0, curiosity_urge + curiosity_spike)
+	aggression_urge = max(AGGRESSION_URGE_REST, aggression_urge - 0.3)
+	print(">>> URGE: target lost — curiosity spiked, aggression dropped")
 
 # -----------------------------------------------------------------------------
 # on_gap_closed — strike distance reached, aggression spikes
