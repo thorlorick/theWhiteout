@@ -58,8 +58,8 @@ var actions: Array = [
 	},
 	{
 		"name":          "HoldGround",
-		"cost":          1.0,
-		"preconditions": {"threat_nearby": true},
+		"cost":          1.8,
+		"preconditions": {"threat_nearby": true, "sees_target": false},
 		"effects":       {"danger_cleared": true}
 	},
 	{
