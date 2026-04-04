@@ -12,13 +12,12 @@ extends Node2D
 # -----------------------------------------------------------------------------
 
 signal spotted_target(body)
-signal lost_target()
-
 signal alert_range(body)
 signal danger_range(body)
-signal range_lost(body)
 signal gap_closed()
 signal gap_opened()
+signal partial_sighting_lost()
+signal confirmed_target_lost()
 
 # -----------------------------------------------------------------------------
 # EXPORTS
@@ -241,17 +240,16 @@ func _cast_rays(delta: float) -> void:
 				_gap_closed          = false
 				_in_alert_range      = false
 				_in_danger_range     = false
-				print(">>> VISION: range lost")
-				range_lost.emit(_last_seen_body)
 				_last_seen_body = null
-				lost_target.emit()
+				print(">>> VISION: confirmed target lost")
+				confirmed_target_lost.emit()
 
 		elif _detection_value <= 0.0 and _in_alert_range:
 			_in_alert_range  = false
 			_in_danger_range = false
-			print(">>> VISION: partial sighting lost — resetting zones")
-			range_lost.emit(_last_seen_body)
 			_last_seen_body = null
+			print(">>> VISION: partial sighting lost")
+			partial_sighting_lost.emit()
 
 # -----------------------------------------------------------------------------
 # dealing with lost targets
