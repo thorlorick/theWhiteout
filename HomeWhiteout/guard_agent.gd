@@ -13,6 +13,7 @@ var animation   := EnemyAnimationComponent.new()
 var speed       := SpeedComponent.new()
 var attack      := AttackComponent.new()
 var reflex      := ReflexComponent.new()
+var combat_fsm := CombatFSMComponent.new()
 
 @export var ai_move_component:  AIMoveComponent
 @export var vision_component:   VisionComponent
@@ -378,8 +379,9 @@ func _on_hit_received(damage_info: DamageInfo) -> void:
 	print(">>> GUARD: took %.1f damage" % damage_info.amount)
 	world_state.set_state("is_injured",  true)
 	world_state.set_state("is_safe",     false)
-	reflex.on_hit_received()
-	_replan()
+	combat_fsm.change_state(CombatFSMComponent.State.STUNNED)
+    reflex.on_hit_received()
+    _replan()
 
 func _on_attack_triggered(damage_info: DamageInfo) -> void:
 	animation.play_attack(attack.is_running())
@@ -391,15 +393,16 @@ func _on_attack_hit_frame() -> void:
 	print(">>> GUARD: hit frame")
 
 func _on_attack_animation_finished() -> void:
-	hitbox_component.deactivate()
-	attack.on_attack_finished()
-	animation.on_attack_finished()
-	print(">>> GUARD: attack animation finished")
-	_replan()
+    hitbox_component.deactivate()
+    attack.on_attack_finished()
+    animation.on_attack_finished()
+    combat_fsm.change_state(CombatFSMComponent.State.READY)
+    _replan()
 
 func _on_died() -> void:
 	print(">>> GUARD: died")
-	reflex.on_died()
+	combat_fsm.change_state(CombatFSMComponent.State.DEAD)
+    reflex.on_died()
 
 # -----------------------------------------------------------------------------
 # MOVEMENT ROUTING
@@ -473,7 +476,10 @@ func _on_reflex_run_started() -> void:
 	ai_move_component.set_running(true)
 
 func _on_reflex_attack_started() -> void:
-	attack.try_attack()
+    if not combat_fsm.can_act():
+        return
+    combat_fsm.change_state(CombatFSMComponent.State.ATTACKING)
+    attack.try_attack()
 
 func _on_reflex_attack_stopped() -> void:
 	hitbox_component.deactivate()
