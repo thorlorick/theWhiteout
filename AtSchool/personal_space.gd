@@ -3,22 +3,21 @@ extends Area2D
 
 # -----------------------------------------------------------------------------
 # PersonalSpace
-# Evaluates a distance against configured zone boundaries.
-# Returns which zone that distance falls in.
-# Generic — works for any entity on any level.
+# Tracks whether the player is currently inside the radius.
+# Knows nothing about combat or meters — just reports presence.
+# GuardAgent reads player_inside each frame and decides what to do.
 # -----------------------------------------------------------------------------
 
-# zone radii — set in the editor per level
-@export var zone_inner:  float = 80.0
+var player_inside: bool = false
 
-# -----------------------------------------------------------------------------
-# get_zone — takes a distance, returns a zone
-# -1 = no threat (outside outer zone)
-#  0 = outer zone — someone is there, worth knowing
-#  1 = middle zone — iffy, keep an eye on it
-#  2 = inner zone — danger, act now
-# -----------------------------------------------------------------------------
-func get_zone(distance: float) -> int:
-	if distance > zone_inner:
-		return -1
-	return 2
+func _ready() -> void:
+	body_entered.connect(_on_body_entered)
+	body_exited.connect(_on_body_exited)
+
+func _on_body_entered(body: Node2D) -> void:
+	if body.is_in_group("player"):
+		player_inside = true
+
+func _on_body_exited(body: Node2D) -> void:
+	if body.is_in_group("player"):
+		player_inside = false
