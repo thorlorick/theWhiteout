@@ -328,7 +328,6 @@ func _on_spotted_target(target_body: Node2D) -> void:
 	_last_known_position  = target_body.global_position
 	_last_known_direction = (target_body.global_position - global_position).normalized()
 	urge.on_target_spotted()
-	reflex.on_target_spotted()
 	combat_meter.lock_target(target_body)
 	_replan()
 
@@ -353,7 +352,6 @@ func _on_danger_range(_target_body: Node2D) -> void:
 	_in_danger_range = true
 	world_state.set_state("threat_nearby", true)
 	vision_component.on_danger_entered()
-	reflex.on_danger_entered()
 	_replan()
 
 func _on_alert_range(_body: Node2D) -> void:
@@ -369,7 +367,6 @@ func _on_partial_sighting_lost() -> void:
 func _on_gap_closed() -> void:
 	world_state.set_state("gap_closed", true)
 	urge.on_gap_closed()
-	reflex.on_gap_closed()
 	_replan()
 
 func _on_gap_opened() -> void:
@@ -379,6 +376,7 @@ func _on_gap_opened() -> void:
 
 func _on_combat_entered(target: Node2D) -> void:
 	in_combat = true
+	reflex.on_target_spotted()
 	_replan()
 
 func _on_combat_lost() -> void:
