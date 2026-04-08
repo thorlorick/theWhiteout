@@ -66,22 +66,6 @@ func remove_from_meter(amount: float) -> void:
 	meter_filled = max(0.0, meter_filled - amount)
 
 # -----------------------------------------------------------------------------
-# lock_target
-# Called by GuardAgent when combat_entered is confirmed.
-# Holds the target reference for the duration of combat.
-# -----------------------------------------------------------------------------
-func lock_target(target: Node2D) -> void:
-	locked_target = target
-
-# -----------------------------------------------------------------------------
-# release_target
-# Called by GuardAgent when combat_lost is confirmed.
-# Clears the lock so the agent knows to resume listening to vision.
-# -----------------------------------------------------------------------------
-func release_target() -> void:
-	locked_target = null
-
-# -----------------------------------------------------------------------------
 # _tick_drain
 # Meter bleeds down every frame on its own.
 # Outside pressure has to keep fighting the drain to keep combat alive.
