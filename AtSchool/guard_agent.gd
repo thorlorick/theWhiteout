@@ -28,6 +28,8 @@ var combat_fsm := CombatFSMComponent.new()
 @export var personality:        PersonalityResource
 @export var knockback_component: KnockbackComponent
 @export var animation_events:   AnimationEvents
+@export var combat_meter: CombatMeterComponent
+@export var personal_space: PersonalSpace
 
 # -----------------------------------------------------------------------------
 # INTERNAL STATE
@@ -40,6 +42,7 @@ var _in_alert_range:       bool    = false
 var _in_danger_range:      bool    = false
 var _facing_direction:     Vector2 = Vector2.DOWN
 var _hold_ground_timer: float = 0.0
+var in_combat: bool = false
 
 # replan timer — urges decide in quiet moments, events decide in loud ones
 const REPLAN_INTERVAL: float = 1.5
@@ -84,6 +87,9 @@ func _connect_signals() -> void:
 
 	animation_events.attack_hit_frame.connect(_on_attack_hit_frame)
 	animation_events.attack_animation_finished.connect(_on_attack_animation_finished)
+
+	combat_meter.combat_entered.connect(_on_combat_entered)
+	combat_meter.combat_lost.connect(_on_combat_lost)
 
 	health_component.hit.connect(_on_hit_received)
 	health_component.died.connect(_on_died)
@@ -370,6 +376,15 @@ func _on_gap_closed() -> void:
 func _on_gap_opened() -> void:
 	_clear_pending_arrivals()
 	world_state.set_state("gap_closed", false)
+	_replan()
+
+func _on_combat_entered(target: Node2D) -> void:
+	in_combat = true
+	_replan()
+
+func _on_combat_lost() -> void:
+	in_combat = false
+	combat_meter.release_target()
 	_replan()
 
 # -----------------------------------------------------------------------------
