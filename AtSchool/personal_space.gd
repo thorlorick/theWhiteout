@@ -1,11 +1,10 @@
-class_name ThreatComponent
-extends Node
+class_name PersonalSpace
+extends Area2D
 
 # -----------------------------------------------------------------------------
-# ThreatComponent
+# PersonalSpace
 # Evaluates a distance against configured zone boundaries.
 # Returns which zone that distance falls in.
-# Knows nothing about who is threatened or what the threat is.
 # Generic — works for any entity on any level.
 # -----------------------------------------------------------------------------
 
