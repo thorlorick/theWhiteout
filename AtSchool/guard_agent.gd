@@ -144,7 +144,7 @@ func _setup_animation() -> void:
 # no decisions made here directly — urges decide, timer calls replan
 # -----------------------------------------------------------------------------
 func _process(delta: float) -> void:
-combat_meter.add_to_meter(vision.combat_influence(delta))
+combat_meter.add_to_meter(vision_component.combat_influence(delta))
 	if personal_space.player_inside and combat_meter.locked_target != null:
 		combat_meter.add_to_meter(combat_meter.personal_space_fill_rate * delta)
 
