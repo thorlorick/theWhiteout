@@ -377,7 +377,7 @@ func _on_gap_opened() -> void:
 
 func _on_combat_entered(target: Node2D) -> void:
 	in_combat = true
-	locked_target = vision.get_current_target()
+	locked_target = vision_component.get_current_target()
 	_replan()
 
 func _on_combat_lost() -> void:
