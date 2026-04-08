@@ -319,6 +319,7 @@ func _on_spotted_target(target_body: Node2D) -> void:
 	_last_known_direction = (target_body.global_position - global_position).normalized()
 	urge.on_target_spotted()
 	reflex.on_target_spotted()
+	combat_meter.lock_target(target_body)
 	_replan()
 
 func _on_confirmed_target_lost() -> void:
