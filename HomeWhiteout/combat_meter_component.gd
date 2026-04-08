@@ -20,10 +20,11 @@ signal meter_low()
 # EXPORTS
 # -----------------------------------------------------------------------------
 @export_group("Meter Settings")
-@export var max_meter:      float = 5.0
-@export var drain_rate:     float = 1.0
-@export var exit_threshold: float = 1.0
-@export var exit_duration:  float = 2.0
+@export var max_meter:      			float = 5.0
+@export var drain_rate:     			float = 1.0
+@export var exit_threshold: 			float = 1.0
+@export var exit_duration:  			float = 2.0
+@export var personal_space_fill_rate: 	float = 3.0
 
 # -----------------------------------------------------------------------------
 # INTERNAL STATE
