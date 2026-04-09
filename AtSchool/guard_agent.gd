@@ -401,7 +401,6 @@ func _on_hit_received(damage_info: DamageInfo) -> void:
 	print(">>> GUARD: took %.1f damage" % damage_info.amount)
 	world_state.set_state("is_injured",  true)
 	world_state.set_state("is_safe",     false)
-	combat_fsm.change_state(CombatFSMComponent.State.STUNNED)
     reflex.on_hit_received()
     _replan()
 
