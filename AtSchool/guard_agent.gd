@@ -295,10 +295,6 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 				urge.committed_to_search()
 				chase_component.start_chase(target)
 
-		"Attack":
-			print(">>> ACTION: attacking")
-			attack.try_attack()
-
 		"HoldGround":
 			print(">>> ACTION: holding ground")
 			chase_component.stop_chase()
