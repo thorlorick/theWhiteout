@@ -62,10 +62,13 @@ func _ready() -> void:
 
 	ai_move_component.set_speed(speed.get_speed())
 
+	knockback_component.setup(self)
+
 	patrol_component.nav_region    = nav_region
 	patrol_component.home_position = home_position
+
 	search_component.nav_region    = nav_region
-	knockback_component.setup(self)
+	
 
 	_connect_signals()
 	_connect_reflex_signals()
