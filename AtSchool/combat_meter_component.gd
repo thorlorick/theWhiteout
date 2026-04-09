@@ -94,14 +94,12 @@ func _check_thresholds(delta: float) -> void:
 				_exit_counting = true
 				_exit_timer    = 0.0
 				meter_low.emit()
-
 			_exit_timer += delta
 
 			if _exit_timer >= exit_duration:
 				in_combat      = false
 				_exit_counting = false
 				_exit_timer    = 0.0
-				locked_target  = null
 				combat_lost.emit()
 		else:
 			# meter climbed back up — reset the exit timer
