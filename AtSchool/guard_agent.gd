@@ -155,7 +155,8 @@ func _process(delta: float) -> void:
 
 	var guard_state: String = _get_urge_state()
 
-	if _in_alert_range:
+# IS THIS NEEDED??????	
+if _in_alert_range:
 		urge.on_alert_tick(delta)
 
 	urge.tick(delta, guard_state)
