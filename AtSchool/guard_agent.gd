@@ -43,7 +43,6 @@ var _in_danger_range:      bool    = false
 var _facing_direction:     Vector2 = Vector2.DOWN
 var _hold_ground_timer: float = 0.0
 var in_combat: bool = false
-var locked_target: Node2D = null
 
 # replan timer — urges decide in quiet moments, events decide in loud ones
 const REPLAN_INTERVAL: float = 1.5
@@ -378,12 +377,10 @@ func _on_gap_opened() -> void:
 
 func _on_combat_entered(target: Node2D) -> void:
 	in_combat = true
-	locked_target = vision_component.get_current_target()
 	_replan()
 
 func _on_combat_lost() -> void:
 	in_combat = false
-	combat_meter.release_target()
 	_replan()
 
 # -----------------------------------------------------------------------------
