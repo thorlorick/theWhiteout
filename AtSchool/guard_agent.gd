@@ -418,6 +418,7 @@ func _on_chase_move_to(position: Vector2) -> void:
 func _on_velocity_changed(direction: Vector2, is_moving: bool, _is_running: bool) -> void:
 	if direction != Vector2.ZERO:
 		_facing_direction = direction
+		vision_component.update_direction(direction, is_moving)
 
 func _on_chase_target_lost() -> void:
 	world_state.set_state("sees_target", false)
