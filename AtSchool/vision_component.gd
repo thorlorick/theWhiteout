@@ -6,7 +6,7 @@ extends Node2D
 # Casts rays. Emits two signals. That's it.
 # -------------------------------------------------------
 
-signal target_spotted(body: Node2D, distance: float)
+signal target_spotted(body: Node2D, intensity: float)
 signal target_lost(last_known_position: Vector2)
 
 # -------------------------------------------------------
