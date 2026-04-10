@@ -13,38 +13,34 @@ var animation   := EnemyAnimationComponent.new()
 var speed       := SpeedComponent.new()
 var attack      := AttackComponent.new()
 var reflex      := ReflexComponent.new()
-var combat_fsm := CombatFSMComponent.new()
+var combat_fsm  := CombatFSMComponent.new()
 
-@export var ai_move_component:  AIMoveComponent
-@export var vision_component:   VisionComponent
-@export var chase_component:    ChaseComponent
-@export var patrol_component:   PatrolComponent
-@export var search_component:   SearchComponent
-@export var health_component:   HealthComponent
-@export var hitbox_component:   HitboxComponent
-@export var hurtbox_component:  HurtboxComponent
-@export var nav_region:         NavigationRegion2D
-@export var home_position:      Vector2
-@export var personality:        PersonalityResource
+@export var ai_move_component:   AIMoveComponent
+@export var vision_component:    VisionComponent
+@export var chase_component:     ChaseComponent
+@export var patrol_component:    PatrolComponent
+@export var search_component:    SearchComponent
+@export var health_component:    HealthComponent
+@export var hitbox_component:    HitboxComponent
+@export var hurtbox_component:   HurtboxComponent
+@export var nav_region:          NavigationRegion2D
+@export var home_position:       Vector2
+@export var personality:         PersonalityResource
 @export var knockback_component: KnockbackComponent
-@export var animation_events:   AnimationEvents
-@export var combat_meter: CombatMeterComponent
-@export var personal_space: PersonalSpace
+@export var animation_events:    AnimationEvents
+@export var combat_meter:        CombatMeterComponent
+@export var personal_space:      PersonalSpace
 
 # -----------------------------------------------------------------------------
 # INTERNAL STATE
 # -----------------------------------------------------------------------------
-var _current_goal_name:    String  = "DoWork"
-var _last_known_position:  Vector2 = Vector2.ZERO
-var _last_known_direction: Vector2 = Vector2.ZERO
+var _current_goal_name:    String    = "DoWork"
+var _last_known_position:  Vector2   = Vector2.ZERO
+var _last_known_direction: Vector2   = Vector2.ZERO
 var _last_damage_info:     DamageInfo = null
-var _in_alert_range:       bool    = false
-var _in_danger_range:      bool    = false
-var _facing_direction:     Vector2 = Vector2.DOWN
-var _hold_ground_timer: float = 0.0
-var in_combat: bool = false
+var _facing_direction:     Vector2   = Vector2.DOWN
+var _hold_ground_timer:    float     = 0.0
 
-# replan timer — urges decide in quiet moments, events decide in loud ones
 const REPLAN_INTERVAL: float = 1.5
 var   _replan_timer:   float = REPLAN_INTERVAL
 
@@ -55,29 +51,23 @@ func _ready() -> void:
 	if personality != null:
 		urge.apply_personality(personality)
 		attack.personality = personality
-		# vision_component.apply_awareness(personality.awareness)
 
 	add_child(attack)
 	add_child(animation)
-
-	# ai_move_component.set_speed(speed.get_speed())
 
 	knockback_component.setup(self)
 
 	patrol_component.nav_region    = nav_region
 	patrol_component.home_position = home_position
-
 	search_component.nav_region    = nav_region
-	
 
 	_connect_signals()
 	_connect_reflex_signals()
 	_setup_animation()
 
-	# start in a safe state — world state reflects reality
-	world_state.set_state("at_home",  true)
-	world_state.set_state("is_safe",  true)
-	world_state.set_state("working",  false)
+	world_state.set_state("at_home", true)
+	world_state.set_state("is_safe", true)
+	world_state.set_state("working", false)
 
 # -----------------------------------------------------------------------------
 # SIGNAL WIRING
@@ -111,17 +101,11 @@ func _connect_signals() -> void:
 	search_component.search_move_to.connect(_on_search_move_to)
 	search_component.search_finished.connect(_on_search_finished)
 
-	vision_component.target_spotted.connect(_on_spotted_target)
-	vision_component.target_lost.connect(_on_confirmed_target_lost)
-
-	# vision_component.danger_range.connect(_on_danger_range)
-	# vision_component.gap_closed.connect(_on_gap_closed)
-	# vision_component.alert_range.connect(_on_alert_range)
-	# vision_component.gap_opened.connect(_on_gap_opened)
-	# vision_component.partial_sighting_lost.connect(_on_partial_sighting_lost)
+	vision_component.target_spotted.connect(_on_target_spotted)
+	vision_component.target_lost.connect(_on_target_lost)
 
 # -----------------------------------------------------------------------------
-# REFLEX SIGNALS (agent routes only)
+# REFLEX SIGNALS
 # -----------------------------------------------------------------------------
 func _connect_reflex_signals() -> void:
 	reflex.interrupt_chase_started.connect(_on_reflex_chase_started)
@@ -144,26 +128,14 @@ func _setup_animation() -> void:
 	animation.setup(anim_tree)
 
 # -----------------------------------------------------------------------------
-# PROCESS — urges tick every frame, planner checks in periodically
-# no decisions made here directly — urges decide, timer calls replan
+# PROCESS
 # -----------------------------------------------------------------------------
 func _process(delta: float) -> void:
-	if not in_combat:
-		var vision_intensity = vision_component.get_current_intensity() 
-		combat_meter.add_to_meter(vision_intensity * delta)
-		if personal_space.is_player_inside():
-			combat_meter.add_to_meter(combat_meter.personal_space_fill_rate * delta)
-
-	if world_state.get_state("known_target") != null:
-    var target = world_state.get_state("known_target")
-    var dist = global_position.distance_to(target.global_position)
-    world_state.set_state("in_range", dist <= personality.attack_range)
-
+	_tick_combat_meter(delta)
+	_tick_in_range()
 
 	var guard_state: String = _get_urge_state()
-
 	urge.tick(delta, guard_state)
-
 	goals.update_priorities(
 		urge.get_comfort_urge(),
 		urge.get_duty_urge(),
@@ -180,16 +152,42 @@ func _process(delta: float) -> void:
 	_replan_timer -= delta
 	if _replan_timer <= 0.0:
 		_replan_timer = REPLAN_INTERVAL
-		print(">>> TIMER: firing replan")
 		_replan()
 
 # -----------------------------------------------------------------------------
-# _get_urge_state — maps world state to urge tick categories
-# agent reads the room and tells the urge component how to feel
-# five states: "safe", "working", "threatened", "hunting", "fighting"
+# _tick_combat_meter
+# Agent relays information to the meter every frame.
+# Vision intensity comes through the signal — stored each frame.
+# Personal space is checked directly.
+# Meter owns all the math — agent just passes what it knows.
+# -----------------------------------------------------------------------------
+var _current_vision_intensity: float = 0.0
+
+func _tick_combat_meter(delta: float) -> void:
+	if _current_vision_intensity > 0.0:
+		combat_meter.add_to_meter(_current_vision_intensity * delta)
+
+	if personal_space.is_player_inside():
+		combat_meter.add_to_meter(combat_meter.personal_space_fill_rate * delta)
+
+# -----------------------------------------------------------------------------
+# _tick_in_range
+# Agent measures distance to known target every frame.
+# Writes in_range to world state directly — no signal needed.
+# -----------------------------------------------------------------------------
+func _tick_in_range() -> void:
+	var target = world_state.get_state("known_target")
+	if target == null:
+		world_state.set_state("in_range", false)
+		return
+	var dist = global_position.distance_to(target.global_position)
+	world_state.set_state("in_range", dist <= personality.attack_range)
+
+# -----------------------------------------------------------------------------
+# _get_urge_state
 # -----------------------------------------------------------------------------
 func _get_urge_state() -> String:
-	if world_state.get_state("in_range"):
+	if world_state.get_state("meter_is_full"):
 		return "fighting"
 	if world_state.get_state("sees_target"):
 		return "hunting"
@@ -202,8 +200,7 @@ func _get_urge_state() -> String:
 	return "working"
 
 # -----------------------------------------------------------------------------
-# _replan — reads urges, finds best unsatisfied goal, acts
-# single decision point. called by timer and by dramatic events.
+# _replan
 # -----------------------------------------------------------------------------
 func _replan() -> void:
 	var best_goal = planner.get_best_goal(goals.goals, _current_goal_name)
@@ -213,37 +210,34 @@ func _replan() -> void:
 	if best_action.is_empty():
 		return
 	if best_action["name"] == planner.current_action_name and best_goal["name"] == _current_goal_name:
-		return  # already doing the best thing
-	_current_goal_name = best_goal["name"]
+		return
+	_current_goal_name          = best_goal["name"]
 	planner.current_action_name = best_action["name"]
 	print(">>> REPLAN — goal: %s | action: %s" % [best_goal["name"], best_action["name"]])
 	_on_best_chosen_action(best_action)
 
 # -----------------------------------------------------------------------------
-# _on_best_chosen_action — planner has spoken, agent routes to components
-# no decisions made here, just the right doors knocked on
+# _on_best_chosen_action
 # -----------------------------------------------------------------------------
 func _on_best_chosen_action(action: Dictionary) -> void:
 	_clear_pending_arrivals()
 	match action["name"]:
 
 		"GoHome":
-			print(">>> ACTION: going home")
 			patrol_component.stop()
 			search_component.stop()
 			chase_component.stop_chase()
-			world_state.set_state("working",   false)
-			world_state.set_state("at_home",   false)
+			world_state.set_state("working", false)
+			world_state.set_state("at_home", false)
 			urge.committed_to_safe()
 			ai_move_component.destination_reached.connect(_on_arrived_home, CONNECT_ONE_SHOT)
 			ai_move_component.set_target(home_position)
 
 		"Flee":
-			print(">>> ACTION: fleeing")
 			patrol_component.stop()
 			search_component.stop()
 			chase_component.stop_chase()
-			world_state.set_state("working",      false)
+			world_state.set_state("working",       false)
 			world_state.set_state("threat_nearby", false)
 			urge.committed_to_safe()
 			ai_move_component.set_running(true)
@@ -251,13 +245,10 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 			ai_move_component.set_target(home_position)
 
 		"Heal":
-			print(">>> ACTION: healing")
-			# placeholder — heal logic lives in health component, wired later
 			patrol_component.stop()
 			search_component.stop()
 
 		"Patrol":
-			print(">>> ACTION: starting patrol")
 			world_state.set_state("at_home", false)
 			world_state.set_state("working", true)
 			world_state.set_state("is_safe", false)
@@ -265,7 +256,6 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 			patrol_component.start()
 
 		"StandGuard":
-			print(">>> ACTION: standing guard")
 			patrol_component.stop()
 			world_state.set_state("working", true)
 			world_state.set_state("is_safe", false)
@@ -273,7 +263,6 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 			ai_move_component.stop()
 
 		"ChaseAsWork":
-			print(">>> ACTION: chasing — duty driven")
 			var target = world_state.get_state("known_target")
 			if target != null:
 				patrol_component.stop()
@@ -283,21 +272,17 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 				chase_component.start_chase(target)
 
 		"Attack":
-			print(">>> ACTION: attacking")
 			attack.try_attack()
 
 		"ChaseAsDanger":
-			print(">>> ACTION: chasing — aggression driven")
 			var target = world_state.get_state("known_target")
 			if target != null:
 				patrol_component.stop()
 				search_component.stop()
-				world_state.set_state("gap_closed",  false)
 				world_state.set_state("target_lost", false)
 				chase_component.start_chase(target)
 
 		"ChaseAsUnknown":
-			print(">>> ACTION: chasing — curiosity driven")
 			var target = world_state.get_state("known_target")
 			if target != null:
 				patrol_component.stop()
@@ -307,7 +292,6 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 				chase_component.start_chase(target)
 
 		"HoldGround":
-			print(">>> ACTION: holding ground")
 			chase_component.stop_chase()
 			patrol_component.stop()
 			ai_move_component.stop()
@@ -315,7 +299,6 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 			_hold_ground_timer = randf_range(0.0, 3.0)
 
 		"Search":
-			print(">>> ACTION: searching for lost target")
 			patrol_component.stop()
 			chase_component.stop_chase()
 			world_state.set_state("at_home",  false)
@@ -324,44 +307,44 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 			search_component.start_search(_last_known_position, _last_known_direction)
 
 # -----------------------------------------------------------------------------
-# EVENTS — signal hub, no decisions, just world state updates and routing
+# VISION SIGNAL HANDLERS
 # -----------------------------------------------------------------------------
-func _on_spotted_target(target_body: Node2D) -> void:
-	if world_state.get_state("sees_target"):
-		return
-	world_state.set_state("sees_target",   true)
-	world_state.set_state("known_target",  target_body)
-	world_state.set_state("is_safe",       false)
-	world_state.set_state("danger_cleared",false)
+func _on_target_spotted(target_body: Node2D, intensity: float) -> void:
+	_current_vision_intensity = intensity
+	if not world_state.get_state("sees_target"):
+		world_state.set_state("sees_target",    true)
+		world_state.set_state("known_target",   target_body)
+		world_state.set_state("is_safe",        false)
+		world_state.set_state("danger_cleared", false)
+		world_state.set_state("target_lost",    false)
+		urge.on_target_spotted()
+		_replan()
 	_last_known_position  = target_body.global_position
 	_last_known_direction = (target_body.global_position - global_position).normalized()
-	urge.on_target_spotted()
-	_replan()
+	world_state.set_state("last_known_position", target_body.global_position)
 
-func _on_confirmed_target_lost() -> void:
-	_last_known_position  = world_state.get_state("known_target").global_position if world_state.get_state("known_target") != null else _last_known_position
-	world_state.set_state("sees_target",      false)
-	world_state.set_state("threat_nearby", false)
-	world_state.set_state("target_lost",      true)
-	world_state.set_state("unknown_resolved", false)
-	world_state.set_state("is_safe",          false)
-	vision_component.on_target_lost()
+func _on_target_lost(last_known_pos: Vector2) -> void:
+	_current_vision_intensity = 0.0
+	_last_known_position      = last_known_pos
+	_last_known_direction     = (last_known_pos - global_position).normalized()
+	world_state.set_state("last_known_position", last_known_pos)
+	world_state.set_state("sees_target",         false)
+	world_state.set_state("threat_nearby",       false)
+	world_state.set_state("target_lost",         true)
+	world_state.set_state("unknown_resolved",    false)
+	world_state.set_state("is_safe",             false)
 	urge.on_target_lost()
-	# reflex.on_target_lost()
-	print(">>> AGENT: target_lost=%s | unknown_resolved=%s" % [
-	# world_state.get_state("target_lost"),
-	# world_state.get_state("unknown_resolved")
-])
 	_replan()
 
+# -----------------------------------------------------------------------------
+# COMBAT METER HANDLERS
+# -----------------------------------------------------------------------------
 func _on_combat_entered() -> void:
-	in_combat = true
-	in_range = true
+	world_state.set_state("meter_is_full", true)
 	_replan()
 
 func _on_combat_lost() -> void:
-	in_combat = false
-	in_range = false
+	world_state.set_state("meter_is_full", false)
 	_replan()
 
 # -----------------------------------------------------------------------------
@@ -369,18 +352,16 @@ func _on_combat_lost() -> void:
 # -----------------------------------------------------------------------------
 func _on_hurtbox_hurt(damage_info: DamageInfo) -> void:
 	urge.on_hit_landed()
-	print(">>> GUARD: hit landed — aggression fed")
 	if damage_info.source != null:
 		damage_info.knockback_direction = (global_position - damage_info.source.global_position).normalized()
 	_last_damage_info = damage_info
 	health_component.take_damage(damage_info)
 
 func _on_hit_received(damage_info: DamageInfo) -> void:
-	print(">>> GUARD: took %.1f damage" % damage_info.amount)
-	world_state.set_state("is_injured",  true)
-	world_state.set_state("is_safe",     false)
-    reflex.on_hit_received()
-    _replan()
+	world_state.set_state("is_injured", true)
+	world_state.set_state("is_safe",    false)
+	reflex.on_hit_received()
+	_replan()
 
 func _on_attack_triggered(damage_info: DamageInfo) -> void:
 	animation.play_attack(attack.is_running())
@@ -389,31 +370,27 @@ func _on_attack_hit_frame() -> void:
 	var info = attack.get_pending_damage_info()
 	info.source = self
 	hitbox_component.activate(info)
-	print(">>> GUARD: hit frame")
 
 func _on_attack_animation_finished() -> void:
-    hitbox_component.deactivate()
-    attack.on_attack_finished()
-    animation.on_attack_finished()
-    combat_fsm.change_state(CombatFSMComponent.State.READY)
-    _replan()
+	hitbox_component.deactivate()
+	attack.on_attack_finished()
+	animation.on_attack_finished()
+	combat_fsm.change_state(CombatFSMComponent.State.READY)
+	_replan()
 
 func _on_died() -> void:
-	print(">>> GUARD: died")
 	combat_fsm.change_state(CombatFSMComponent.State.DEAD)
-    reflex.on_died()
+	reflex.on_died()
 
 # -----------------------------------------------------------------------------
 # MOVEMENT ROUTING
 # -----------------------------------------------------------------------------
 func _on_arrived_home() -> void:
-	print(">>> ARRIVED HOME")
 	world_state.set_state("at_home",         true)
-	world_state.set_state("is_safe",          true)
-	world_state.set_state("working",          false)
-	world_state.set_state("gap_closed",       false)
-	world_state.set_state("target_lost",      false)
-	world_state.set_state("unknown_resolved", true)
+	world_state.set_state("is_safe",         true)
+	world_state.set_state("working",         false)
+	world_state.set_state("target_lost",     false)
+	world_state.set_state("unknown_resolved",true)
 	search_component.stop()
 	ai_move_component.stop()
 
@@ -442,12 +419,11 @@ func _on_velocity_changed(direction: Vector2, is_moving: bool, _is_running: bool
 
 func _on_chase_target_lost() -> void:
 	world_state.set_state("sees_target", false)
-	world_state.set_state("gap_closed",  false)
 	reflex.on_chase_target_lost()
 	_replan()
 
 # -----------------------------------------------------------------------------
-# REFLEX HANDLERS (routing only)
+# REFLEX HANDLERS
 # -----------------------------------------------------------------------------
 func _on_reflex_chase_started() -> void:
 	var target = world_state.get_state("known_target")
@@ -475,10 +451,10 @@ func _on_reflex_run_started() -> void:
 	ai_move_component.set_running(true)
 
 func _on_reflex_attack_started() -> void:
-    if not combat_fsm.can_act():
-        return
-    combat_fsm.change_state(CombatFSMComponent.State.ATTACKING)
-    attack.try_attack()
+	if not combat_fsm.can_act():
+		return
+	combat_fsm.change_state(CombatFSMComponent.State.ATTACKING)
+	attack.try_attack()
 
 func _on_reflex_attack_stopped() -> void:
 	hitbox_component.deactivate()
@@ -497,7 +473,6 @@ func _on_reflex_death_started() -> void:
 
 func _on_knockback_finished() -> void:
 	hurtbox_component.set_invulnerable(false)
-	print(">>> GUARD: knockback finished — replanning")
 	_replan()
 
 # -----------------------------------------------------------------------------
