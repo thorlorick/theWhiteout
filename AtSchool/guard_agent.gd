@@ -184,7 +184,7 @@ func _process(delta: float) -> void:
 # five states: "safe", "working", "threatened", "hunting", "fighting"
 # -----------------------------------------------------------------------------
 func _get_urge_state() -> String:
-	if world_state.get_state("gap_closed"):
+	if world_state.get_state("in_range"):
 		return "fighting"
 	if world_state.get_state("sees_target"):
 		return "hunting"
