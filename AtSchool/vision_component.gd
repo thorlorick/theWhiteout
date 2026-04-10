@@ -124,9 +124,11 @@ func _cast_rays(delta: float) -> void:
 		var angle   = lerp(-cone_half_spread, cone_half_spread, t)
 		var ray_dir = gaze.rotated(deg_to_rad(angle))
 		var target  = body.global_position + ray_dir * ray_length
+		
 		var query   = PhysicsRayQueryParameters2D.create(body.global_position, target)
 		query.exclude        = [body]
 		query.collision_mask = wall_collision_mask
+		
 		var result  = space_state.intersect_ray(query)
 		if result and result.collider.is_in_group("player"):
 			hits += 1
@@ -138,12 +140,23 @@ func _cast_rays(delta: float) -> void:
 		_last_known_pos  = seen_body.global_position
 		_looking_around  = false
 
-		var dist = body.global_position.distance_to(seen_body.global_position)
-
 		if not _is_tracking:
 			_is_tracking = true
 
-		target_spotted.emit(seen_body, dist)
+		# --- THE MATH SECTION ---
+		
+		# 1. Coverage: How much of the cone is hitting the player? (0.2 to 1.0)
+		var coverage = float(hits) / float(ray_count)
+		
+		# 2. Proximity: 1.0 if touching, 0.0 if at the very tip of the ray.
+		var dist = body.global_position.distance_to(seen_body.global_position)
+		var proximity = clamp(1.0 - (dist / ray_length), 0.0, 1.0)
+		
+		# 3. Final Intensity: Combined score
+		var intensity = coverage * proximity
+		
+		# Now we send the "Packaged Info"
+		target_spotted.emit(seen_body, intensity)
 
 	else:
 		if _is_tracking:
