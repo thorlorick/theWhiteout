@@ -277,6 +277,10 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 				world_state.set_state("target_lost", false)
 				chase_component.start_chase(target)
 
+		"Attack":
+			print(">>> ACTION: attacking")
+			attack.try_attack()
+
 		"ChaseAsDanger":
 			print(">>> ACTION: chasing — aggression driven")
 			var target = world_state.get_state("known_target")
