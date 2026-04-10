@@ -14,7 +14,6 @@ extends Resource
 @export_range(0, 10) var duty:       int = 5
 @export_range(0, 10) var curiosity:  int = 5
 @export_range(0, 10) var aggression: int = 5
-@export_range(0, 10) var awareness:  int = 5
 
 # -----------------------------------------------------------------------------
 # combat stats
