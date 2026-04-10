@@ -333,16 +333,15 @@ func _on_confirmed_target_lost() -> void:
 	_last_known_position  = world_state.get_state("known_target").global_position if world_state.get_state("known_target") != null else _last_known_position
 	world_state.set_state("sees_target",      false)
 	world_state.set_state("threat_nearby", false)
-	world_state.set_state("gap_closed",       false)
 	world_state.set_state("target_lost",      true)
 	world_state.set_state("unknown_resolved", false)
 	world_state.set_state("is_safe",          false)
 	vision_component.on_target_lost()
 	urge.on_target_lost()
-	reflex.on_target_lost()
+	# reflex.on_target_lost()
 	print(">>> AGENT: target_lost=%s | unknown_resolved=%s" % [
-	world_state.get_state("target_lost"),
-	world_state.get_state("unknown_resolved")
+	# world_state.get_state("target_lost"),
+	# world_state.get_state("unknown_resolved")
 ])
 	_replan()
 
