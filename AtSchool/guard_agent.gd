@@ -347,10 +347,12 @@ func _on_confirmed_target_lost() -> void:
 
 func _on_combat_entered() -> void:
 	in_combat = true
+	in_range = true
 	_replan()
 
 func _on_combat_lost() -> void:
 	in_combat = false
+	in_range = false
 	_replan()
 
 # -----------------------------------------------------------------------------
