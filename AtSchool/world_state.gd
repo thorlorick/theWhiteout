@@ -37,6 +37,7 @@ var _state: Dictionary = {
 
 	"last_known_position":   Vector2.ZERO,
 	"target_distance":       0.0,
+	"in_range":				false,
 
 	# --- guard condition ----------------------------------------------------
 	"is_injured":            false,
