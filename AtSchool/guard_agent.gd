@@ -114,11 +114,11 @@ func _connect_signals() -> void:
 	vision_component.target_spotted.connect(_on_spotted_target)
 	vision_component.target_lost.connect(_on_confirmed_target_lost)
 
-	#vision_component.danger_range.connect(_on_danger_range)
-	#vision_component.gap_closed.connect(_on_gap_closed)
-	#vision_component.alert_range.connect(_on_alert_range)
-	#vision_component.gap_opened.connect(_on_gap_opened)
-	#vision_component.partial_sighting_lost.connect(_on_partial_sighting_lost)
+	# vision_component.danger_range.connect(_on_danger_range)
+	# vision_component.gap_closed.connect(_on_gap_closed)
+	# vision_component.alert_range.connect(_on_alert_range)
+	# vision_component.gap_opened.connect(_on_gap_opened)
+	# vision_component.partial_sighting_lost.connect(_on_partial_sighting_lost)
 
 # -----------------------------------------------------------------------------
 # REFLEX SIGNALS (agent routes only)
@@ -349,7 +349,7 @@ func _on_confirmed_target_lost() -> void:
 	world_state.get_state("unknown_resolved")
 ])
 	_replan()
-
+# ---------
 func _on_danger_range(_target_body: Node2D) -> void:
 	_in_danger_range = true
 	world_state.set_state("threat_nearby", true)
@@ -370,12 +370,13 @@ func _on_gap_closed() -> void:
 	world_state.set_state("gap_closed", true)
 	urge.on_gap_closed()
 	_replan()
-
+# ---------
+# ---------
 func _on_gap_opened() -> void:
 	_clear_pending_arrivals()
 	world_state.set_state("gap_closed", false)
 	_replan()
-
+# ---------
 func _on_combat_entered(target: Node2D) -> void:
 	in_combat = true
 	_replan()
