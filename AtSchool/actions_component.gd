@@ -46,7 +46,7 @@ var actions: Array = [
 		"name":          "ChaseAsWork",
 		"cost":          1.5,
 		"preconditions": {"sees_target": true},
-		"effects":       {"working": true, "gap_closed": true}
+		"effects":       {"working": true}
 	},
 
 	# --- ClearDanger (danger_cleared: true) -------------------------------
@@ -59,8 +59,8 @@ var actions: Array = [
 	{
 		"name":          "ChaseAsDanger",
 		"cost":          1.0,
-		"preconditions": {"sees_target": true, "gap_closed": false},
-		"effects":       {"danger_cleared": true, "gap_closed": true}
+		"preconditions": {"sees_target": true},
+		"effects":       {"danger_cleared": true}
 	},
 
 	# --- ResolveUnknown (unknown_resolved: true) --------------------------
