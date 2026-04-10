@@ -18,9 +18,10 @@ var _state: Dictionary = {
 	"danger_cleared":        false,
 
 	# --- threat -------------------------------------------------------------
-	"sees_target":           false,
-	"threat_nearby":         false,
-	"target_lost":           false,
+	"sees_target":			false,
+	"threat_nearby":		false,
+	"target_lost":			false,
+	"meter_is_full":		false,
 
 	# --- target reference ---------------------------------------------------
 	# not a bool — holds the actual target node reference.
