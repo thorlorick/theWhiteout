@@ -21,6 +21,8 @@ extends Resource
 # -----------------------------------------------------------------------------
 @export var max_health:        float = 100.0
 
+@export var attack_range: float = 45.0
+
 @export var walk_attack_damage: float = 10.0
 @export var walk_attack_force:  float = 150.0
 
