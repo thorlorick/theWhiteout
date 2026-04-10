@@ -349,34 +349,7 @@ func _on_confirmed_target_lost() -> void:
 	world_state.get_state("unknown_resolved")
 ])
 	_replan()
-# ---------
-func _on_danger_range(_target_body: Node2D) -> void:
-	_in_danger_range = true
-	world_state.set_state("threat_nearby", true)
-	vision_component.on_danger_entered()
-	_replan()
 
-func _on_alert_range(_body: Node2D) -> void:
-	_in_alert_range = true
-	vision_component.on_alert_entered()
-
-func _on_partial_sighting_lost() -> void:
-	_in_alert_range  = false
-	_in_danger_range = false
-	world_state.set_state("threat_nearby",  false)
-	world_state.set_state("danger_cleared", true)
-
-func _on_gap_closed() -> void:
-	world_state.set_state("gap_closed", true)
-	urge.on_gap_closed()
-	_replan()
-# ---------
-# ---------
-func _on_gap_opened() -> void:
-	_clear_pending_arrivals()
-	world_state.set_state("gap_closed", false)
-	_replan()
-# ---------
 func _on_combat_entered(target: Node2D) -> void:
 	in_combat = true
 	_replan()
