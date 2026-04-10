@@ -154,6 +154,11 @@ func _process(delta: float) -> void:
 		if personal_space.is_player_inside():
 			combat_meter.add_to_meter(combat_meter.personal_space_fill_rate * delta)
 
+	if world_state.get_state("known_target") != null:
+    var target = world_state.get_state("known_target")
+    var dist = global_position.distance_to(target.global_position)
+    world_state.set_state("in_range", dist <= personality.attack_range)
+
 
 	var guard_state: String = _get_urge_state()
 
