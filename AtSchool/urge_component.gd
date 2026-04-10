@@ -150,13 +150,6 @@ func on_target_lost() -> void:
 	print(">>> URGE: target lost — curiosity spiked, aggression dropped")
 
 # -----------------------------------------------------------------------------
-# on_gap_closed — strike distance reached, aggression spikes
-# -----------------------------------------------------------------------------
-func on_gap_closed() -> void:
-	aggression_urge = max(aggression_urge, aggression_spike)
-	print(">>> URGE: gap closed — aggression spiked")
-
-# -----------------------------------------------------------------------------
 # on_hit_landed — successful hit feeds aggression
 # -----------------------------------------------------------------------------
 func on_hit_landed() -> void:
