@@ -91,32 +91,34 @@ func _connect_signals() -> void:
 	animation_events.attack_hit_frame.connect(_on_attack_hit_frame)
 	animation_events.attack_animation_finished.connect(_on_attack_animation_finished)
 
+	attack.attack_triggered.connect(_on_attack_triggered)
+
+	chase_component.move_to.connect(_on_chase_move_to)
+	chase_component.target_lost.connect(_on_chase_target_lost)
+
 	combat_meter.combat_entered.connect(_on_combat_entered)
 	combat_meter.combat_lost.connect(_on_combat_lost)
 
 	health_component.hit.connect(_on_hit_received)
 	health_component.died.connect(_on_died)
 
-	vision_component.spotted_target.connect(_on_spotted_target)
-	vision_component.danger_range.connect(_on_danger_range)
-	vision_component.gap_closed.connect(_on_gap_closed)
-	vision_component.alert_range.connect(_on_alert_range)
-	vision_component.gap_opened.connect(_on_gap_opened)
-	vision_component.confirmed_target_lost.connect(_on_confirmed_target_lost)
-	vision_component.partial_sighting_lost.connect(_on_partial_sighting_lost)
-
-	chase_component.move_to.connect(_on_chase_move_to)
-	chase_component.target_lost.connect(_on_chase_target_lost)
-
 	hurtbox_component.hurt.connect(_on_hurtbox_hurt)
 
 	knockback_component.knockback_finished.connect(_on_knockback_finished)
 
-	attack.attack_triggered.connect(_on_attack_triggered)
-
 	patrol_component.new_patrol_target.connect(_on_new_patrol_target)
+
 	search_component.search_move_to.connect(_on_search_move_to)
 	search_component.search_finished.connect(_on_search_finished)
+
+	vision_component.target_spotted.connect(_on_spotted_target)
+	vision_component.target_lost.connect(_on_confirmed_target_lost)
+
+	#vision_component.danger_range.connect(_on_danger_range)
+	#vision_component.gap_closed.connect(_on_gap_closed)
+	#vision_component.alert_range.connect(_on_alert_range)
+	#vision_component.gap_opened.connect(_on_gap_opened)
+	#vision_component.partial_sighting_lost.connect(_on_partial_sighting_lost)
 
 # -----------------------------------------------------------------------------
 # REFLEX SIGNALS (agent routes only)
