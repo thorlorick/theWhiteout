@@ -345,7 +345,7 @@ func _on_confirmed_target_lost() -> void:
 ])
 	_replan()
 
-func _on_combat_entered(target: Node2D) -> void:
+func _on_combat_entered() -> void:
 	in_combat = true
 	_replan()
 
