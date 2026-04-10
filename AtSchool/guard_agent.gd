@@ -55,12 +55,12 @@ func _ready() -> void:
 	if personality != null:
 		urge.apply_personality(personality)
 		attack.personality = personality
-		vision_component.apply_awareness(personality.awareness)
+		# vision_component.apply_awareness(personality.awareness)
 
 	add_child(attack)
 	add_child(animation)
 
-	ai_move_component.set_speed(speed.get_speed())
+	# ai_move_component.set_speed(speed.get_speed())
 
 	knockback_component.setup(self)
 
