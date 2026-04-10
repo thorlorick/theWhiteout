@@ -51,6 +51,12 @@ var actions: Array = [
 
 	# --- ClearDanger (danger_cleared: true) -------------------------------
 	{
+		"name":          "Attack",
+		"cost":          1.0,
+		"preconditions": {"sees_target": true, "meter_is_full": true},
+		"effects":       {"danger_cleared": true}
+	},
+	{
 		"name":          "HoldGround",
 		"cost":          1.2,
 		"preconditions": {"threat_nearby": true},
