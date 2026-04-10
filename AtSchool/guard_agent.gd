@@ -55,6 +55,8 @@ func _ready() -> void:
 	add_child(attack)
 	add_child(animation)
 
+	ai_move_component.set_speed(speed.get_speed())
+
 	knockback_component.setup(self)
 
 	patrol_component.nav_region    = nav_region
