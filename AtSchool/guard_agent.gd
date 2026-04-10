@@ -149,17 +149,13 @@ func _setup_animation() -> void:
 # -----------------------------------------------------------------------------
 func _process(delta: float) -> void:
 	if not in_combat:
-		combat_meter.add_to_meter(vision_component.combat_influence(delta))
-			if personal_space.player_inside:
-    			combat_meter.add_to_meter(combat_meter.personal_space_fill_rate * delta)
-
+		var vision_intensity = vision_component.get_current_intensity() 
+		combat_meter.add_to_meter(vision_intensity * delta)
+		if personal_space.is_player_inside():
+			combat_meter.add_to_meter(combat_meter.personal_space_fill_rate * delta)
 
 
 	var guard_state: String = _get_urge_state()
-
-# IS THIS NEEDED??????	
-if _in_alert_range:
-		urge.on_alert_tick(delta)
 
 	urge.tick(delta, guard_state)
 
