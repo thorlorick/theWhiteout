@@ -167,7 +167,9 @@ var _current_vision_intensity: float = 0.0
 
 func _tick_combat_meter(delta: float) -> void:
 	if _current_vision_intensity > 0.0:
-		combat_meter.add_to_meter(_current_vision_intensity * delta)
+		var fill_amount = _current_vision_intensity * combat_meter.personal_space_fill_rate * delta
+		combat_meter.add_to_meter(fill_amount)
+		print("Intensity: ", _current_vision_intensity, " | Meter: ", combat_meter.meter_filled)
 
 	if personal_space.is_player_inside():
 		combat_meter.add_to_meter(combat_meter.personal_space_fill_rate * delta)
