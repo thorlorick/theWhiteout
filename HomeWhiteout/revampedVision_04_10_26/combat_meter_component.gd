@@ -70,6 +70,8 @@ func remove_from_meter(amount: float) -> void:
 # Outside pressure has to keep fighting the drain to keep combat alive.
 # -----------------------------------------------------------------------------
 func _tick_drain(delta: float) -> void:
+	if in_combat:
+		return  # No drain during combat
 	if meter_filled > 0.0:
 		meter_filled = max(0.0, meter_filled - drain_rate * delta)
 
