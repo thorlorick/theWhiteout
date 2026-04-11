@@ -280,6 +280,7 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 				chase_component.start_chase(target)
 
 		"Attack":
+			combat_fsm.change_state(CombatFSMComponent.State.ATTACKING)
 			attack.try_attack()
 
 		"ChaseAsDanger":
