@@ -13,7 +13,7 @@ var goals: Array = [
 	},
 	{
 		"name":          "DoWork",
-		"desired_state": {"working": true, "sees_target": false},  # ADD THIS
+		"desired_state": {"working": true, "sees_target": false},  
 		"priority":      0.0
 	},
 	{
@@ -23,7 +23,7 @@ var goals: Array = [
 	},
 	{
 		"name":          "ClearDanger",
-		"desired_state": {"danger_cleared": true, "sees_target": false},  # ADD THIS
+		"desired_state": {"danger_cleared": true, "sees_target": false},  
 		"priority":      0.0
 	},
 ]
