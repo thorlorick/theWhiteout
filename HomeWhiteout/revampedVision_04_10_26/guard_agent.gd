@@ -136,6 +136,10 @@ func _process(delta: float) -> void:
 	_tick_combat_meter(delta)
 	_tick_in_range()
 
+	# Combat FSM has control - planner waits
+	if combat_fsm.current_state == CombatFSMComponent.State.ATTACKING:
+		return
+
 	var guard_state: String = _get_urge_state()
 	urge.tick(delta, guard_state)
 	goals.update_priorities(
