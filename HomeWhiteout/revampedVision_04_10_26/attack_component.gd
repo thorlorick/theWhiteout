@@ -22,8 +22,8 @@ var _pending_damage_info: DamageInfo = null  # stored until hit frame
 # -----------------------------------------------------------------------------
 # set_running — called by agent when velocity_changed fires
 # -----------------------------------------------------------------------------
-# func set_running(value: bool) -> void:
-#	_is_running = value
+func set_running(value: bool) -> void:
+	_is_running = value
 
 func on_velocity_changed(_direction: Vector2, _is_moving: bool, is_running: bool) -> void:
 	_is_running = is_running
