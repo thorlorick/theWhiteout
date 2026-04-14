@@ -33,13 +33,13 @@ var actions: Array = [
 	{
 		"name":          "Patrol",
 		"cost":          1.0,
-		"preconditions": {"is_safe": true},
+		"preconditions": {"is_safe": true, "sees_target": false},
 		"effects":       {"working": true, "at_home": false}
 	},
 	{
 		"name":          "StandGuard",
 		"cost":          1.0,
-		"preconditions": {"at_post": true},
+		"preconditions": {"at_post": true, "sees_target": false},
 		"effects":       {"working": true}
 	},
 	{
