@@ -446,11 +446,11 @@ func _on_reflex_movement_stopped() -> void:
 	ai_move_component.stop()
 
 func _on_reflex_speed_reset() -> void:
-	ai_move_component.set_speed(speed.get_speed())
+	ai_move_component.set_speed(speed_component_node.get_speed())
 	ai_move_component.set_running(false)
 
 func _on_reflex_run_started() -> void:
-	ai_move_component.set_speed(speed.get_run_speed())
+	ai_move_component.set_speed(speed_component_node.get_speed())
 	ai_move_component.set_running(true)
 
 func _on_reflex_attack_started() -> void:
