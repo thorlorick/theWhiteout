@@ -73,3 +73,6 @@ Oh my god.........this damn system is going to be the death of me. Vision keeps 
 
 # April 10, 2026
 Rory is in contention at the Masters...such a good day 1!! BUT, I truly believe that the vision component is what's giving us all the headaches. That thing feels way too big for a simple vision system. Honestly, it doesn't even need to be vision, just player detection. Working on that today.
+
+# April 14, 2026
+RORY WON!!!...and no work was done!!! Ok, I've gone back to the very beginning and I'm making sure all the components work and do their thing. I'm going to break it into boxes as they say, and then try to get it all working together. Combat is still the issue, but I'm sure that is a by-product of sloppy and hap-hazard design. We are getting more focused now...but still entertaining new ideas.
