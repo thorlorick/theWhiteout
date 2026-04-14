@@ -10,7 +10,6 @@ var world_state := WorldState.new()
 var goals       := GoalsComponent.new()
 var actions     := ActionsComponent.new()
 var animation   := EnemyAnimationComponent.new()
-var speed       := SpeedComponent.new()
 var attack      := AttackComponent.new()
 var reflex      := ReflexComponent.new()
 var combat_fsm  := CombatFSMComponent.new()
@@ -27,6 +26,7 @@ var combat_fsm  := CombatFSMComponent.new()
 @export var home_position:       Vector2
 @export var personality:         PersonalityResource
 @export var knockback_component: KnockbackComponent
+@export var speed_component_node: SpeedComponent
 @export var animation_events:    AnimationEvents
 @export var combat_meter:        CombatMeterComponent
 @export var personal_space:      PersonalSpace
@@ -55,7 +55,7 @@ func _ready() -> void:
 	add_child(attack)
 	add_child(animation)
 
-	ai_move_component.set_speed(speed.get_speed())
+	ai_move_component.set_speed(speed_component_node.get_speed())
 
 	knockback_component.setup(self)
 
