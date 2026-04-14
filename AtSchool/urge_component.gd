@@ -95,7 +95,7 @@ func tick(delta: float, state: String) -> void:
 			# out and about. doing the job but misses home.
 			comfort_urge    = min(1.0, comfort_urge   + comfort_build_rate   * delta)
 			duty_urge       = _decay_toward(duty_urge,       DUTY_URGE_REST,       duty_decay_rate,       delta)
-			curiosity_urge  = min(1.0, curiosity_urge  + curiosity_build_rate  * delta)
+			# curiosity_urge  = min(1.0, curiosity_urge  + curiosity_build_rate  * delta)
 			aggression_urge = _decay_toward(aggression_urge, AGGRESSION_URGE_REST, aggression_decay_rate, delta)
 
 		"threatened":
