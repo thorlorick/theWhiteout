@@ -21,6 +21,7 @@ var active: bool   = false
 func start_chase(target_body: Node2D) -> void:
 	target = target_body
 	active = true
+# what - is this for?
 
 func stop_chase() -> void:
 	target = null
