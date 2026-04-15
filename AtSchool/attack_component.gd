@@ -13,6 +13,8 @@ extends Node
 signal attack_triggered(damage_info: DamageInfo)
 signal attack_finished
 
+var personality: PersonalityResource
+
 var _can_attack: bool = true
 var _is_running: bool = false
 var _pending_damage_info: DamageInfo = null  # stored until hit frame
