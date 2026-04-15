@@ -84,32 +84,44 @@ func update_direction(direction: Vector2, is_moving: bool) -> void:
 # _update_sweep
 # -------------------------------------------------------
 func _update_sweep(delta: float) -> void:
-	if _is_tracking and _last_seen_body != null:
-		var to_target    = (_last_seen_body.global_position - body.global_position).normalized()
-		var facing_angle = rad_to_deg(facing.angle())
-		var target_angle = rad_to_deg(to_target.angle())
-		var desired      = target_angle - facing_angle
-		_sweep_angle     = move_toward(_sweep_angle, desired, sweep_speed * delta * 3.0)
+	# 1. PRIORITY: LOCK-ON TRACKING
+	if _is_tracking and is_instance_valid(_last_seen_body):
+		# Calculate the global angle from guard to player
+		var to_target = _last_seen_body.global_position - body.global_position
+		var target_global_angle = to_target.angle()
+		
+		# Calculate the guard's current base facing angle
+		var base_facing_angle = facing.angle()
+		
+		# The sweep_angle is the DIFFERENCE between where we are looking and where we want to look
+		var angle_diff = wrapf(rad_to_deg(target_global_angle - base_facing_angle), -180, 180)
+		
+		# Smoothly rotate the "neck" (sweep) toward that difference
+		# We use a higher speed (3x) so the eye tracks faster than the head idle-sweeps
+		_sweep_angle = move_toward(_sweep_angle, angle_diff, sweep_speed * delta * 3.0)
 		return
 
+	# 2. SECONDARY: SEARCHING (LOOK AROUND)
 	if _looking_around:
 		_look_timer += delta
 		if _look_timer >= LOOK_STEP_TIME:
 			_look_timer = 0.0
 			_look_step += 1
 			if _look_step >= LOOK_ANGLES.size():
-				_look_step      = LOOK_ANGLES.size() - 1
 				_looking_around = false
+				_look_step = 0
+		
 		_sweep_angle = move_toward(_sweep_angle, LOOK_ANGLES[_look_step], sweep_speed * delta)
 		return
 
+	# 3. DEFAULT: PING-PONG SWEEP
 	_sweep_angle += sweep_speed * _sweep_dir * delta
 	if _sweep_angle > sweep_angle:
 		_sweep_angle = sweep_angle
-		_sweep_dir   = -1.0
+		_sweep_dir = -1.0
 	elif _sweep_angle < -sweep_angle:
 		_sweep_angle = -sweep_angle
-		_sweep_dir   =  1.0
+		_sweep_dir = 1.0
 
 # -------------------------------------------------------
 # _cast_rays
