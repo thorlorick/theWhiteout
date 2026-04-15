@@ -50,6 +50,7 @@ var   _replan_timer:   float = REPLAN_INTERVAL
 func _ready() -> void:
 	if personality != null:
 		urge.apply_personality(personality)
+		health_component.setup(personality)
 		attack.personality = personality
 
 	add_child(attack)
