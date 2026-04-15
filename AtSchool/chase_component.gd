@@ -11,7 +11,7 @@ extends Node
 signal target_lost
 signal move_to(position: Vector2)
 
-const GIVEUP_DISTANCE: float = 400.0   # too far — guard gives up
+const GIVEUP_DISTANCE: float = 400.0   # too far — guard gives up this should be the distance for rays
 
 var target: Node2D = null
 var active: bool   = false
