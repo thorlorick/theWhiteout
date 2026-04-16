@@ -41,6 +41,9 @@ var duty_decay_rate:        float = 0.03
 
 var alert_zone_boost:       float = 0.003
 
+var max_speed_modifier:    float = 1.0
+var acceleration_modifier: float = 1.0
+
 # rest values — urges drift back toward these when decaying
 const COMFORT_URGE_REST:    float = 0.05
 const DUTY_URGE_REST:       float = 0.05
