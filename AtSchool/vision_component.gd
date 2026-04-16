@@ -18,7 +18,7 @@ signal target_lost(last_known_position: Vector2)
 @export var debug_draw:          bool  = true
 
 @export_group("Rays")
-@export var ray_count:           int   = 5
+@export var ray_count:           int   = 30
 @export var ray_length:          float = 200.0
 @export var cone_half_spread:    float = 60.0
 
@@ -50,7 +50,7 @@ func _physics_process(delta: float) -> void:
 # -------------------------------------------------------
 # update_direction — called by GuardAgent
 # -------------------------------------------------------
-func update_direction(direction: Vector2) -> void:
+func update_direction(direction: Vector2, _is_moving: bool = false, _is_running: bool = false) -> void:
 	if direction != Vector2.ZERO:
 		facing = direction
 
