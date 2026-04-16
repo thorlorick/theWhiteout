@@ -30,8 +30,6 @@ signal meter_low()
 # INTERNAL STATE
 # -----------------------------------------------------------------------------
 var meter_filled:   float  = 0.0
-var in_combat:      bool   = false
-
 var _exit_timer:    float  = 0.0
 var _exit_counting: bool   = false
 
@@ -45,8 +43,8 @@ func _ready() -> void:
 # PHYSICS PROCESS
 # -----------------------------------------------------------------------------
 func _physics_process(delta: float) -> void:
-	_tick_drain(delta)
 	_check_thresholds(delta)
+	_tick_drain(delta)
 
 # -----------------------------------------------------------------------------
 # add_to_meter
@@ -54,7 +52,9 @@ func _physics_process(delta: float) -> void:
 # Vision hit, personal space contact, hit received — all come through here.
 # -----------------------------------------------------------------------------
 func add_to_meter(amount: float) -> void:
+	var was_below = meter_filled < max_meter
 	meter_filled = min(max_meter, meter_filled + amount)
+
 
 # -----------------------------------------------------------------------------
 # remove_from_meter
@@ -80,29 +80,25 @@ func _tick_drain(delta: float) -> void:
 func _check_thresholds(delta: float) -> void:
 
 	# --- ENTRY ---
-	if not in_combat and meter_filled >= max_meter:
-		in_combat      = true
-		_exit_counting = false
-		_exit_timer    = 0.0
+	if meter_filled >= max_meter:
+		print(">>> COMBAT METER: 100% (ENTER)")
 		combat_entered.emit()
 		return
 
-	# --- EXIT GUARD ---
-	if in_combat:
-		if meter_filled <= exit_threshold:
-			if not _exit_counting:
-				_exit_counting = true
-				_exit_timer    = 0.0
-				meter_low.emit()
-			_exit_timer += delta
+	# --- EXIT ---
+	if meter_filled <= exit_threshold:
+		if not _exit_counting:
+			_exit_counting = true
+			_exit_timer = 0.0
+			meter_low.emit()
 
-			if _exit_timer >= exit_duration:
-				in_combat      = false
-				_exit_counting = false
-				_exit_timer    = 0.0
-				combat_lost.emit()
-		else:
-			# meter climbed back up — reset the exit timer
-			if _exit_counting:
-				_exit_counting = false
-				_exit_timer    = 0.0
+		_exit_timer += delta
+
+		if _exit_timer >= exit_duration:
+			_exit_counting = false
+			_exit_timer = 0.0
+			combat_lost.emit()
+	else:
+		if _exit_counting:
+			_exit_counting = false
+			_exit_timer = 0.0
