@@ -314,28 +314,29 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 # -----------------------------------------------------------------------------
 func _on_target_spotted(target_body: Node2D, intensity: float) -> void:
 	_current_vision_intensity = intensity
+
 	if not world_state.get_state("sees_target"):
-		world_state.set_state("sees_target",    true)
-		world_state.set_state("known_target",   target_body)
-		world_state.set_state("is_safe",        false)
-		world_state.set_state("danger_cleared", false)
-		world_state.set_state("target_lost",    false)
+		world_state.set_state("sees_target", true)
+		world_state.set_state("known_target", target_body)
+		
 		urge.on_target_spotted()
 		_replan()
-	_last_known_position  = target_body.global_position
+
+	_last_known_position = target_body.global_position
 	_last_known_direction = (target_body.global_position - global_position).normalized()
-	world_state.set_state("last_known_position", target_body.global_position)
+	
+	world_state.set_state("last_known_position", _last_known_position)
 
 func _on_target_lost(last_known_pos: Vector2) -> void:
 	_current_vision_intensity = 0.0
-	_last_known_position      = last_known_pos
-	_last_known_direction     = (last_known_pos - global_position).normalized()
+	
+	world_state.set_state("sees_target", false)
+	world_state.set_state("target_lost", true)
+	
+	_last_known_position = last_known_pos
+	_last_known_direction = (last_known_pos - global_position).normalized()
 	world_state.set_state("last_known_position", last_known_pos)
-	world_state.set_state("sees_target",         false)
-	world_state.set_state("threat_nearby",       false)
-	world_state.set_state("target_lost",         true)
-	world_state.set_state("unknown_resolved",    false)
-	world_state.set_state("is_safe",             false)
+	
 	urge.on_target_lost()
 	_replan()
 
