@@ -37,7 +37,6 @@ func on_target_spotted() -> void:
 	print(">>> REFLEX: target spotted — drop everything, start chase")
 	interrupt_patrol_stopped.emit()
 	interrupt_search_stopped.emit()
-	interrupt_run_started.emit()    # FIX: start running
 	interrupt_chase_started.emit()  
 
 # -----------------------------------------------------------------------------
