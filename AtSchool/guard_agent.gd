@@ -26,7 +26,7 @@ var combat_fsm  := CombatFSMComponent.new()
 @export var home_position:       Vector2
 @export var personality:         PersonalityResource
 @export var knockback_component: KnockbackComponent
-@export var speed_component_node: SpeedComponent
+@export var speed_component: SpeedComponent
 @export var animation_events:    AnimationEvents
 @export var combat_meter:        CombatMeterComponent
 @export var personal_space:      PersonalSpace
@@ -56,7 +56,7 @@ func _ready() -> void:
 	add_child(attack)
 	add_child(animation)
 
-	ai_move_component.set_speed(speed_component_node.get_speed())
+	ai_move_component.set_speed(speed_component.get_speed())
 
 	knockback_component.setup(self)
 
@@ -320,6 +320,7 @@ func _on_target_spotted(target_body: Node2D, intensity: float) -> void:
 		world_state.set_state("known_target", target_body)
 		
 		urge.on_target_spotted()
+		reflex.on_target_spotted()
 		_replan()
 
 	_last_known_position = target_body.global_position
@@ -338,6 +339,7 @@ func _on_target_lost(last_known_pos: Vector2) -> void:
 	world_state.set_state("last_known_position", last_known_pos)
 	
 	urge.on_target_lost()
+	reflex.on_target_lost()
 	_replan()
 
 # -----------------------------------------------------------------------------
@@ -434,9 +436,11 @@ func _on_reflex_chase_started() -> void:
 	var target = world_state.get_state("known_target")
 	if target != null:
 		chase_component.start_chase(target)
+		ai_move_component.set_speed(speed_component.get_chase_speed())
 
 func _on_reflex_chase_stopped() -> void:
 	chase_component.stop_chase()
+	ai_move_component.set_speed(speed_component.get_speed())
 
 func _on_reflex_patrol_stopped() -> void:
 	patrol_component.stop()
@@ -448,11 +452,11 @@ func _on_reflex_movement_stopped() -> void:
 	ai_move_component.stop()
 
 func _on_reflex_speed_reset() -> void:
-	ai_move_component.set_speed(speed_component_node.get_speed())
+	ai_move_component.set_speed(speed_component.get_speed())
 	ai_move_component.set_running(false)
 
 func _on_reflex_run_started() -> void:
-	ai_move_component.set_speed(speed_component_node.get_speed())
+	ai_move_component.set_speed(speed_component.get_speed())
 	ai_move_component.set_running(true)
 
 func _on_reflex_attack_started() -> void:
