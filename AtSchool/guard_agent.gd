@@ -55,9 +55,9 @@ func _ready() -> void:
 
 	add_child(attack)
 	add_child(animation)
-
-	ai_move_component.set_speed(speed_component.get_speed())
-
+	
+	ai_move_component.set_speed(speed_component.get_speed_for_intensity(0.0, urge.max_speed_modifier))
+	
 	knockback_component.setup(self)
 
 	patrol_component.nav_region    = nav_region
@@ -314,20 +314,20 @@ func _on_best_chosen_action(action: Dictionary) -> void:
 # -----------------------------------------------------------------------------
 func _on_target_spotted(target_body: Node2D, intensity: float) -> void:
 	_current_vision_intensity = intensity
-
 	if not world_state.get_state("sees_target"):
 		world_state.set_state("sees_target", true)
 		world_state.set_state("known_target", target_body)
 		
 		urge.on_target_spotted()
 		reflex.on_target_spotted()
+		combat_meter.add_to_meter(intensity)
 		_replan()
-
 	_last_known_position = target_body.global_position
 	_last_known_direction = (target_body.global_position - global_position).normalized()
 	
 	world_state.set_state("last_known_position", _last_known_position)
-
+	ai_move_component.set_speed(speed_component.get_speed_for_intensity(intensity, urge.max_speed_modifier))
+	
 func _on_target_lost(last_known_pos: Vector2) -> void:
 	_current_vision_intensity = 0.0
 	
