@@ -57,25 +57,31 @@ func apply_personality(p: PersonalityResource) -> void:
 	var c  = p.comfort    / 10.0
 	var d  = p.duty       / 10.0
 	var cu = p.curiosity  / 10.0
+	var s  = p.sloth      / 10.0
 
-	aggression_build_rate = lerp(0.01, 0.20, a)
-	aggression_decay_rate = lerp(0.12, 0.01, a)
-	aggression_spike      = lerp(0.4,  1.0,  a)
-	hit_landed_bonus      = lerp(0.05, 0.25, a)
-	hit_received_comfort_spike    = lerp(0.4,  0.05, a)
-	hit_received_aggression_spike = lerp(0.05, 0.4,  a)
+	# Physical Speed Math
+	# 0 sloth = 1.2x speed | 10 sloth = 0.5x speed
+	max_speed_modifier    = lerp(1.2, 0.5, s)
+	acceleration_modifier = lerp(1.0, 0.1, s)
+
+	# Aggression Math
+	aggression_build_rate          = lerp(0.01, 0.20, a)
+	aggression_decay_rate          = lerp(0.12, 0.01, a)
+	aggression_spike               = lerp(0.4,  1.0,  a)
+	hit_landed_bonus               = lerp(0.05, 0.25, a)
+	hit_received_comfort_spike     = lerp(0.4,  0.05, a)
+	hit_received_aggression_spike  = lerp(0.05, 0.4,  a)
 	target_spotted_comfort_drop    = lerp(0.2,  0.05, a)
 	target_spotted_aggression_bump = lerp(0.05, 0.2,  a)
 
-	comfort_build_rate    = lerp(0.01, 0.05, c)
-	comfort_decay_rate    = lerp(0.05, 0.01, c)
-
-	duty_build_rate       = lerp(0.01, 0.05, d)
-	duty_decay_rate       = lerp(0.05, 0.01, d)
-
-	curiosity_build_rate  = lerp(0.0,  0.05, cu)
-	curiosity_decay_rate  = lerp(0.08, 0.02, cu)
-	curiosity_spike       = lerp(0.2,  1.0,  cu)
+	# Comfort / Duty / Curiosity Math
+	comfort_build_rate   = lerp(0.01, 0.05, c)
+	comfort_decay_rate   = lerp(0.05, 0.01, c)
+	duty_build_rate      = lerp(0.01, 0.05, d)
+	duty_decay_rate      = lerp(0.05, 0.01, d)
+	curiosity_build_rate = lerp(0.0,  0.05, cu)
+	curiosity_decay_rate = lerp(0.08, 0.02, cu)
+	curiosity_spike      = lerp(0.2,  1.0,  cu)
 
 # -----------------------------------------------------------------------------
 # tick — called every frame by GuardAgent
