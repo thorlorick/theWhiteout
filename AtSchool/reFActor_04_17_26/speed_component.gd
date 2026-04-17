@@ -13,3 +13,12 @@ func get_chase_speed() -> float:
 
 func get_run_speed() -> float:
 	return run_speed
+	
+func apply_personality(p: PersonalityResource) -> void:
+	var s = p.sloth / 10.0
+	var modifier = lerp(1.2, 0.5, s)
+	base_speed  = base_speed  * modifier
+	chase_speed = chase_speed * modifier
+	run_speed   = run_speed   * modifier
+	print(">>> SPEED: base: %.1f | chase: %.1f | run: %.1f" % [base_speed, chase_speed, run_speed])
+
