@@ -14,33 +14,33 @@ var attack      := AttackComponent.new()
 var reflex      := ReflexComponent.new()
 var combat_fsm  := CombatFSMComponent.new()
 
-@export var ai_move_component:   AIMoveComponent
-@export var vision_component:    VisionComponent
-@export var chase_component:     ChaseComponent
-@export var patrol_component:    PatrolComponent
-@export var search_component:    SearchComponent
-@export var health_component:    HealthComponent
-@export var hitbox_component:    HitboxComponent
-@export var hurtbox_component:   HurtboxComponent
-@export var nav_region:          NavigationRegion2D
-@export var home_position:       Vector2
-@export var personality:         PersonalityResource
-@export var knockback_component: KnockbackComponent
-@export var speed_component: SpeedComponent
-@export var animation_events:    AnimationEvents
-@export var combat_meter:        CombatMeterComponent
-@export var personal_space:      PersonalSpace
+@export var ai_move_component:   	AIMoveComponent
+@export var vision_component:    	VisionComponent
+@export var chase_component:     	ChaseComponent
+@export var patrol_component:    	PatrolComponent
+@export var search_component:    	SearchComponent
+@export var health_component:    	HealthComponent
+@export var hitbox_component:    	HitboxComponent
+@export var hurtbox_component:   	HurtboxComponent
+@export var nav_region:          	NavigationRegion2D
+@export var home_position:       	Vector2
+@export var personality:         	PersonalityResource
+@export var knockback_component: 	KnockbackComponent
+@export var speed_component: 		SpeedComponent
+@export var animation_events:    	AnimationEvents
+@export var combat_meter:        	CombatMeterComponent
+@export var personal_space:      	PersonalSpace
 
 # -----------------------------------------------------------------------------
 # INTERNAL STATE
 # -----------------------------------------------------------------------------
-var _current_goal_name:    String    = "DoWork"
-var _last_known_position:  Vector2   = Vector2.ZERO
-var _last_known_direction: Vector2   = Vector2.ZERO
-var _last_damage_info:     DamageInfo = null
-var _facing_direction:     Vector2   = Vector2.DOWN
-var _hold_ground_timer:    float     = 0.0
-var _target_distance: float = INF
+var _current_goal_name:    		String    = "DoWork"
+var _last_known_position:  		Vector2   = Vector2.ZERO
+var _last_known_direction: 		Vector2   = Vector2.ZERO
+var _last_damage_info:     		DamageInfo = null
+var _facing_direction:     		Vector2	= Vector2.DOWN
+var _hold_ground_timer:  	 	float	= 0.0
+var _target_distance: 			float	= INF
 
 const REPLAN_INTERVAL: float = 1.5
 var   _replan_timer:   float = REPLAN_INTERVAL
