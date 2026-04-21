@@ -79,3 +79,6 @@ RORY WON!!!...and no work was done!!! Ok, I've gone back to the very beginning a
 
 # April 17, 2026
 It's been officially 2 months since we started this journey, and we have learned a ton. Like, tying speed to vision is not a great idea!!! We are still miles away from combat or anything even remotely close to a game, but this is still a blast. Where we are....well, we had to go back a few steps and get speed back to where it was, but we still have a lot of loose ends and orphaned signals. No combat yet...completely lost the animations and everything somewhere (they are in the player, but they aren't being called). So, 2 months in, and still no clue!!!!!
+
+# April 20, 2026
+I have discovered that trying to build in two locations is difficult. That's it.
